@@ -4,14 +4,34 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         
-        System.out.println("=== DUNGEON CRAWLER ===");
+        printLogo();
+        
         System.out.print("Enter your name: ");
         String name = scanner.nextLine();
         
-        System.out.println("Welcome, " + name + "!");
-        System.out.println("Your adventure begins...");
+        System.out.println("\nWelcome, " + name + "!");
+        System.out.println("Your descent begins...");
         
         scanner.close();
+    }
+    
+    private static void printLogo() {
+        System.out.println();
+        System.out.println("  ╔═════════════════════════════════════════════════════════════════╗");
+        System.out.println("  ║                                                                 ║");
+        System.out.println("  ║         ████████╗██╗  ██╗███████╗   ██████╗ ██╗████████╗        ║");
+        System.out.println("  ║         ╚══██╔══╝██║  ██║██╔════╝   ██╔══██╗██║╚══██╔══╝        ║");
+        System.out.println("  ║            ██║   ███████║█████╗     ██████╔╝██║   ██║           ║");
+        System.out.println("  ║            ██║   ██╔══██║██╔══╝     ██╔═══╝ ██║   ██║           ║");
+        System.out.println("  ║            ██║   ██║  ██║███████╗   ██║     ██║   ██║           ║");
+        System.out.println("  ║            ╚═╝   ╚═╝  ╚═╝╚══════╝   ╚═╝     ╚═╝   ╚═╝           ║");
+        System.out.println("  ║                                                                 ║");
+        System.out.println("  ║                        ─────────────────                        ║");
+        System.out.println("  ║                         A Dungeon Awaits                        ║");
+        System.out.println("  ║                        ─────────────────                        ║");
+        System.out.println("  ║                                                                 ║");
+        System.out.println("  ╚═════════════════════════════════════════════════════════════════╝");
+        System.out.println();
     }
 }
 
