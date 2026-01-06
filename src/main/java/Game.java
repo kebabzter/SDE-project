@@ -24,7 +24,143 @@ public class Game {
         System.out.println("\n" + playerName + ", you have chosen the path of the " + hero.getType().getName() + "!");
         hero.displayStats();
         
-        System.out.println("Your adventure begins...");
+        System.out.println("\nPress ENTER to begin your descent into The Pit...");
+        scanner.nextLine();
+        
+        gameLoop();
+    }
+    
+    /**
+     * Main game loop - generates rooms and handles combat/shop cycle.
+     */
+    private void gameLoop() {
+        int currentLevel = 1;
+        Shop shop = new Shop(scanner);
+        
+        while (hero.isAlive()) {
+            // Generate room with enemies
+            Room room = generateRoom(currentLevel);
+            room.displayInfo();
+            
+            // Combat phase
+            while (!room.isCleared() && hero.isAlive()) {
+                Enemy enemy = room.getNextEnemy();
+                if (enemy != null) {
+                    combat(enemy);
+                }
+            }
+            
+            // Check if hero survived
+            if (!hero.isAlive()) {
+                break;
+            }
+            
+            // Room cleared!
+            System.out.println("\n✓ Room cleared!");
+            
+            // Shop phase
+            System.out.println("\nWould you like to visit the shop? [Y/N]");
+            String choice = scanner.nextLine().trim().toUpperCase();
+            if (choice.equals("Y") || choice.equals("YES")) {
+                shop.open(hero);
+            }
+            
+            // Next level
+            currentLevel++;
+            System.out.println("\nPress ENTER to descend deeper...");
+            scanner.nextLine();
+        }
+        
+        gameOver(currentLevel);
+    }
+    
+    /**
+     * Generates a room with enemies scaled to the level.
+     */
+    private Room generateRoom(int level) {
+        Room room = new Room(level);
+        
+        // Number of enemies increases with level
+        int enemyCount = 1 + (level / 3);
+        
+        for (int i = 0; i < enemyCount; i++) {
+            Enemy enemy = createScaledEnemy(level);
+            room.addEnemy(enemy);
+        }
+        
+        return room;
+    }
+    
+    /**
+     * Creates an enemy with stats scaled to the level.
+     */
+    private Enemy createScaledEnemy(int level) {
+        String[] enemyNames = {"Goblin", "Skeleton", "Orc", "Dark Mage", "Demon"};
+        String name = enemyNames[(level - 1) % enemyNames.length];
+        
+        int health = 30 + (level * 10);
+        int attack = 5 + (level * 2);
+        int defense = 2 + level;
+        int gold = 10 + (level * 5);
+        
+        return new Enemy(name, health, attack, defense, gold);
+    }
+    
+    /**
+     * Handles combat between hero and enemy.
+     */
+    private void combat(Enemy enemy) {
+        System.out.println("\n⚔ A " + enemy.getName() + " appears!");
+        
+        while (enemy.isAlive() && hero.isAlive()) {
+            System.out.println("\n─────────────────────────────────────");
+            System.out.println("You: " + hero.getHealth() + "/" + hero.getMaxHealth() + " HP | " + 
+                             enemy.getName() + ": " + enemy.getHealth() + "/" + enemy.getMaxHealth() + " HP");
+            System.out.println("─────────────────────────────────────");
+            System.out.println("[1] Attack");
+            System.out.println("[2] Defend");
+            System.out.print("> ");
+            
+            String action = scanner.nextLine().trim();
+            
+            if (action.equals("1")) {
+                // Hero attacks
+                int damage = hero.getAttack();
+                enemy.takeDamage(damage);
+                System.out.println("You attack for " + damage + " damage!");
+                
+                if (!enemy.isAlive()) {
+                    System.out.println("✓ " + enemy.getName() + " defeated!");
+                    hero.addGold(enemy.getGoldReward());
+                    System.out.println("+ " + enemy.getGoldReward() + " gold");
+                    break;
+                }
+                
+                // Enemy attacks back
+                int enemyDamage = enemy.getAttack();
+                hero.takeDamage(enemyDamage);
+                System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage!");
+                
+            } else if (action.equals("2")) {
+                // Hero defends
+                System.out.println("You brace for impact!");
+                int enemyDamage = Math.max(1, enemy.getAttack() / 2);
+                hero.takeDamage(enemyDamage);
+                System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage (reduced)!");
+            }
+        }
+    }
+    
+    /**
+     * Displays game over screen.
+     */
+    private void gameOver(int finalLevel) {
+        System.out.println("\n╔═══════════════════════════════════════╗");
+        System.out.println("║            GAME OVER                  ║");
+        System.out.println("╚═══════════════════════════════════════╝");
+        System.out.println("\nYou reached level: " + finalLevel);
+        System.out.println("Final gold: " + hero.getGold());
+        System.out.println("\nThank you for playing The Pit!");
     }
 
     /**
