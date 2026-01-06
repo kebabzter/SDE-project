@@ -1,7 +1,3 @@
-/**
- * Represents a Hero character in the Dungeon Crawler.
- * Encapsulates hero properties and stats.
- */
 public class Hero {
     private final String name;
     private final HeroType type;
@@ -10,8 +6,10 @@ public class Hero {
     private int mana;
     private int level;
     private int gold;
-    private int attack;
+    private int baseAttack;
     private int defense;
+    private Weapon weapon;
+    private ItemContainer inventory;
 
     public Hero(String playerName, HeroType type) {
         this.name = playerName;
@@ -20,9 +18,14 @@ public class Hero {
         this.health = maxHealth;
         this.mana = 50 + (type.getIntelligence() * 5);
         this.level = 1;
-        this.gold = 0;
-        this.attack = 10 + type.getStrength();
+        this.gold = 50; // Starting gold
+        this.baseAttack = 5 + type.getStrength();
         this.defense = 5 + (type.getStrength() / 2);
+        this.weapon = new Weapon("Rusty Sword", 5); // Starting weapon
+        this.inventory = new ItemContainer("Backpack", 10);
+        
+        // Add starting items to inventory
+        inventory.addItem(new SimpleItem("Health Potion", 20, "Restores 30 HP"));
     }
 
     public void displayStats() {
@@ -34,14 +37,28 @@ public class Hero {
         System.out.println("Level:        " + level);
         System.out.println("Health:       " + health + "/" + maxHealth);
         System.out.println("Mana:         " + mana);
-        System.out.println("Attack:       " + attack);
+        System.out.println("Attack:       " + getAttack() + " (Base: " + baseAttack + ")");
         System.out.println("Defense:      " + defense);
         System.out.println("Gold:         " + gold);
+        System.out.println("Weapon:       " + weapon.getDescription());
         System.out.println("\nAttributes:");
         System.out.println("  Strength:     " + type.getStrength());
         System.out.println("  Intelligence: " + type.getIntelligence());
         System.out.println("  Agility:      " + type.getAgility());
         System.out.println("═══════════════════════════════════════\n");
+    }
+    
+    public int getAttack() {
+        return baseAttack + weapon.getDamage();
+    }
+    
+    public void equipWeapon(Weapon newWeapon) {
+        this.weapon = newWeapon;
+        System.out.println("Equipped: " + newWeapon.getDescription());
+    }
+    
+    public ItemContainer getInventory() {
+        return inventory;
     }
     
     public void takeDamage(int damage) {
@@ -70,7 +87,7 @@ public class Hero {
     }
     
     public void increaseAttack(int amount) {
-        attack += amount;
+        baseAttack += amount;
     }
     
     public void increaseDefense(int amount) {
@@ -106,8 +123,12 @@ public class Hero {
         return gold;
     }
     
-    public int getAttack() {
-        return attack;
+    public int getBaseAttack() {
+        return baseAttack;
+    }
+    
+    public Weapon getWeapon() {
+        return weapon;
     }
     
     public int getDefense() {
