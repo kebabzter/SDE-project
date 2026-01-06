@@ -1,7 +1,3 @@
-/**
- * Represents an enemy in the dungeon.
- * Contains stats and combat-related properties.
- */
 public class Enemy {
     private final String name;
     private int health;
