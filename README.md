@@ -5,7 +5,7 @@ A text-based dungeon crawler game demonstrating multiple design patterns in Java
 ## Game Overview
 
 **The Pit** is an endless survival dungeon crawler where you:
-- Choose a hero class (Warrior, Mage, or Rogue)
+- Choose a hero class (Goblin, Knight, or Wizard)
 - Fight increasingly difficult enemies
 - Earn gold to buy upgrades in the shop
 - Try to survive as deep as possible
@@ -14,7 +14,7 @@ A text-based dungeon crawler game demonstrating multiple design patterns in Java
 
 ## Design Patterns Implemented
 
-This project demonstrates **3 design patterns** from **2 different categories**:
+This project demonstrates **6 design patterns** from **3 different categories**:
 - **1 Creational Pattern:** Singleton
 - **2 Structural Patterns:** Decorator, Composite
 
