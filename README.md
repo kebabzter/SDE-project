@@ -68,10 +68,10 @@ public static void main(String[] args) {
 - Only one game instance manages all game state throughout execution
 
 ### Benefits
-✅ **Single Source of Truth** - All game state in one place  
-✅ **Global Access** - Any part of code can access the game  
-✅ **Resource Control** - Prevents multiple Scanner instances  
-✅ **State Consistency** - No conflicting game states  
+ **Single Source of Truth** - All game state in one place  
+ **Global Access** - Any part of code can access the game  
+ **Resource Control** - Prevents multiple Scanner instances  
+ **State Consistency** - No conflicting game states  
 
 ### Why This Pattern?
 Without Singleton, multiple Game objects could exist with different states, causing bugs and confusion. The Singleton pattern guarantees one coordinated game instance.
@@ -158,10 +158,10 @@ hero.equipWeapon(enchanted);
 5. Check hero stats to see combined attack damage
 
 ### Benefits
-✅ **Open/Closed Principle** - Add features without modifying Weapon class  
-✅ **Flexible Enhancement** - Add/remove bonuses dynamically at runtime  
-✅ **Stackable** - Can wrap decorators around decorators for multiple enchantments  
-✅ **No Subclass Explosion** - Don't need FlameWeapon, IceWeapon, etc. classes  
+ **Open/Closed Principle** - Add features without modifying Weapon class  
+ **Flexible Enhancement** - Add/remove bonuses dynamically at runtime  
+ **Stackable** - Can wrap decorators around decorators for multiple enchantments  
+ **No Subclass Explosion** - Don't need FlameWeapon, IceWeapon, etc. classes  
 
 ### Why This Pattern?
 Instead of creating subclasses for every weapon variation (FlameRustySword, IceIronSword, etc.), we can dynamically "decorate" any weapon with any enchantment. This keeps code maintainable and flexible.
@@ -269,10 +269,10 @@ public void displayContents(int indent) {
 The "Total value" is calculated recursively - if you had pouches inside the backpack with items inside the pouches, it would sum everything!
 
 ### Benefits
-✅ **Uniform Treatment** - Same interface for items and containers  
-✅ **Natural Hierarchy** - Backpack → Pouch → Coin Purse → Items  
-✅ **Recursive Operations** - Calculate total value, display all, search all  
-✅ **Flexible Structure** - Add/remove containers and items freely  
+ **Uniform Treatment** - Same interface for items and containers  
+ **Natural Hierarchy** - Backpack → Pouch → Coin Purse → Items  
+ **Recursive Operations** - Calculate total value, display all, search all  
+ **Flexible Structure** - Add/remove containers and items freely  
 
 ### Why This Pattern?
 In a real game, you might have:
@@ -395,25 +395,6 @@ src/main/java/
 - Operations like "total value" work automatically via recursion
 
 ---
-
-## Future Enhancements
-
-To add more patterns:
-- **Factory Pattern** - Create different enemy types
-- **Strategy Pattern** - Different AI behaviors for enemies
-- **Command Pattern** - Undo combat moves
-- **State Pattern** - Hero status effects (poisoned, stunned)
-- **Observer Pattern** - Achievement system
-
----
-
-## License
-
-MIT License - See LICENSE file
-
----
-
-## Author
 
 Created as a demonstration of design patterns in Java for Software Design and Engineering course.
 
