@@ -1,15 +1,24 @@
 import java.util.Scanner;
 
-/**
- * Game class responsible for game flow and mechanics.
- * Follows the Single Responsibility Principle.
- */
 public class Game {
+    private static Game instance;
     private final Scanner scanner;
     private Hero hero;
 
-    public Game(Scanner scanner) {
-        this.scanner = scanner;
+    // Private constructor prevents external instantiation
+    private Game() {
+        this.scanner = new Scanner(System.in);
+    }
+    
+    public static Game getInstance() {
+        if (instance == null) {
+            synchronized (Game.class) {
+                if (instance == null) {
+                    instance = new Game();
+                }
+            }
+        }
+        return instance;
     }
 
     /**
