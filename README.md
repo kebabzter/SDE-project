@@ -17,7 +17,7 @@ A text-based dungeon crawler game demonstrating multiple design patterns in Java
 This project demonstrates **6 design patterns** from **3 different categories**:
 - **2 Creational Patterns:** Singleton, Factory
 - **2 Structural Patterns:** Decorator, Composite
-- **1 Behavioral Pattern:** State
+- **2 Behavioral Patterns:** State, Strategy
 
 ---
 
@@ -405,7 +405,143 @@ The State pattern elegantly handles this by delegating to state objects.
 
 ---
 
-## 5. COMPOSITE PATTERN (Structural)
+## 5. STRATEGY PATTERN (Behavioral)
+
+### Where It's Used
+**Files:** `EnemyAI.java`, `AggressiveAI.java`, `DefensiveAI.java`, `SmartAI.java`, `Enemy.java`, `EnemyFactory.java`, `Game.java`
+
+### What It Does
+Encapsulates different enemy AI behaviors into strategies. Each enemy type uses a different strategy to decide whether to attack, defend, or heal during combat.
+
+### How It Works
+
+```java
+// Strategy Interface - defines the algorithm family
+public interface EnemyAI {
+    enum Action {
+        ATTACK("Attack"),
+        DEFEND("Defend"),
+        HEAL("Heal");
+    }
+    
+    Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth);
+    String getStrategyName();
+    String getDescription();
+}
+
+// Concrete Strategy 1: Always attacks
+public class AggressiveAI implements EnemyAI {
+    public Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth) {
+        return Action.ATTACK;
+    }
+}
+
+// Concrete Strategy 2: Defends when wounded
+public class DefensiveAI implements EnemyAI {
+    public Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth) {
+        double healthPercent = (double) enemy.getHealth() / enemy.getMaxHealth();
+        return (healthPercent <= 0.5) ? Action.DEFEND : Action.ATTACK;
+    }
+}
+
+// Concrete Strategy 3: Intelligent adaptation
+public class SmartAI implements EnemyAI {
+    public Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth) {
+        // Defend if critical, attack if hero weak, balance otherwise
+        double enemyHP = (double) enemy.getHealth() / enemy.getMaxHealth();
+        double heroHP = (double) heroHealth / heroMaxHealth;
+        
+        if (enemyHP < 0.4) return Action.DEFEND;
+        if (heroHP <= 0.3) return Action.ATTACK;
+        return heroHP > enemyHP ? Action.ATTACK : Action.DEFEND;
+    }
+}
+```
+
+### Usage in Code
+
+**EnemyFactory.java (assigning strategies):**
+```java
+private static void assignStrategy(Enemy enemy, EnemyType type) {
+    switch (type) {
+        case GOBLIN:
+            enemy.setStrategy(new DefensiveAI()); // Cowardly
+        case SKELETON:
+            enemy.setStrategy(new AggressiveAI()); // Relentless
+        case ORC:
+            enemy.setStrategy(new SmartAI()); // Strong and adaptable
+        case DARK_MAGE:
+            enemy.setStrategy(new SmartAI()); // Intelligent
+        case DEMON:
+            enemy.setStrategy(new AggressiveAI()); // Ruthless
+    }
+}
+```
+
+**Game.java (using strategies in combat):**
+```java
+// Enemy decides action using AI strategy
+EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
+performEnemyAction(enemy, hero, enemyAction);
+
+// Performs the chosen action
+private void performEnemyAction(Enemy enemy, Hero hero, EnemyAI.Action action) {
+    switch (action) {
+        case ATTACK:
+            int damage = enemy.getAttack();
+            hero.takeDamage(damage);
+            System.out.println(enemy.getName() + " (" + enemy.getStrategy().getStrategyName() + ") attacks!");
+        case DEFEND:
+            System.out.println(enemy.getName() + " (" + enemy.getStrategy().getStrategyName() + ") braces!");
+        case HEAL:
+            System.out.println(enemy.getName() + " (" + enemy.getStrategy().getStrategyName() + ") heals!");
+    }
+}
+```
+
+### Where to See It
+1. Start the game and fight enemies
+2. Watch enemy AI strategies in action:
+   ```
+   Goblin (Defensive) braces for impact!
+   Skeleton (Aggressive) attacks for 8 damage!
+   Orc (Smart) braces for impact!
+   Dark Mage (Smart) attacks for 12 damage!
+   Demon (Aggressive) attacks for 15 damage!
+   ```
+3. Notice:
+   - **Goblins** defend when taking damage (cowardly)
+   - **Skeletons** always attack (relentless)
+   - **Orcs & Dark Mages** adapt based on health levels
+   - **Demons** always attack (ruthless)
+
+### Benefits
+ **Easy to Extend** - Add new AI behaviors without modifying Enemy class  
+ **Runtime Switching** - Change strategies during runtime  
+ **Encapsulation** - Each strategy is independent and focused  
+ **Testability** - Strategies can be tested in isolation  
+ **Reusability** - Same strategy can be used by different enemy types  
+
+### Why This Pattern?
+Without Strategy pattern, Enemy would need massive conditional logic:
+```java
+if (type == GOBLIN && health < maxHealth * 0.5) {
+    defend();
+} else if (type == SKELETON) {
+    attack();
+} else if (type == ORC && health < maxHealth * 0.4) {
+    defend();
+} else if (type == ORC && heroHealth <= maxHeroHealth * 0.3) {
+    attack();
+}
+// ... dozens of conditions
+```
+
+The Strategy pattern cleanly separates decision logic into reusable, independent classes.
+
+---
+
+## 6. COMPOSITE PATTERN (Structural)
 
 ### Where It's Used
 **Files:** `Item.java`, `SimpleItem.java`, `ItemContainer.java`
@@ -531,9 +667,10 @@ The Composite pattern lets you treat all of this uniformly with one interface, a
 | Pattern | Category | Files | Line Count | Demonstrated In |
 |---------|----------|-------|------------|-----------------|
 | **Singleton** | Creational | `Game.java`, `Main.java` | ~40 | Game instance management |
-| **Factory** | Creational | `EnemyFactory.java`, `Game.java` | ~80 | Room generation - Varied enemy types |
+| **Factory** | Creational | `EnemyFactory.java`, `Game.java` | ~120 | Room generation - Varied enemy types with strategies |
 | **Decorator** | Structural | `Weapon.java`, `EnchantedWeapon.java` | ~60 | Shop option [5] - Weapon enchanting |
 | **State** | Behavioral | `HeroState.java`, `NormalState.java`, `PoisonedState.java`, `StunnedState.java`, `Hero.java` | ~150 | Combat - Hero status effects |
+| **Strategy** | Behavioral | `EnemyAI.java`, `AggressiveAI.java`, `DefensiveAI.java`, `SmartAI.java`, `Enemy.java`, `EnemyFactory.java`, `Game.java` | ~200 | Combat - Enemy AI decision making |
 | **Composite** | Structural | `Item.java`, `SimpleItem.java`, `ItemContainer.java` | ~120 | Shop option [6] - Inventory system |
 
 ---
@@ -570,11 +707,11 @@ mvn exec:java
 ```
 src/main/java/
 ├── Main.java              # Entry point (uses Singleton)
-├── Game.java              # SINGLETON - game state manager (uses FACTORY and STATE)
+├── Game.java              # SINGLETON - game state manager (uses FACTORY, STATE, STRATEGY)
 ├── Hero.java              # Player character (uses STATE pattern)
 ├── HeroType.java          # Hero class definitions
-├── Enemy.java             # Enemy entities (applies STATE effects)
-├── EnemyFactory.java      # FACTORY - creates different enemy types
+├── Enemy.java             # Enemy entities (uses STRATEGY pattern)
+├── EnemyFactory.java      # FACTORY - creates different enemy types with strategies
 ├── Room.java              # Room/level container
 ├── Shop.java              # Shop system
 │
@@ -585,6 +722,11 @@ src/main/java/
 ├── NormalState.java       # STATE - normal status
 ├── PoisonedState.java     # STATE - poisoned status
 ├── StunnedState.java      # STATE - stunned status
+│
+├── EnemyAI.java           # STRATEGY - strategy interface for AI
+├── AggressiveAI.java      # STRATEGY - always attacks
+├── DefensiveAI.java       # STRATEGY - defends when wounded
+├── SmartAI.java           # STRATEGY - intelligent adaptation
 │
 ├── Item.java              # COMPOSITE - component interface
 ├── SimpleItem.java        # COMPOSITE - leaf node
@@ -627,6 +769,24 @@ src/main/java/
 # 4. Watch effects expire:
 #    ✓ [Hero] returns to normal!
 # 5. Verify state transitions in combat UI
+```
+
+### Test Strategy
+```bash
+# 1. Start game and fight enemies at different levels
+# 2. Observe different enemy AI behaviors:
+#    Goblin (Defensive) braces for impact!      # Defensive
+#    Skeleton (Aggressive) attacks for damage!  # Aggressive
+#    Orc (Smart) attacks strategically!         # Smart/Adaptive
+#    Dark Mage (Smart) braces for impact!       # Smart/Adaptive
+#    Demon (Aggressive) attacks for damage!     # Aggressive
+# 3. Notice:
+#    - Goblins defend when at half health or lower
+#    - Skeletons always attack relentlessly
+#    - Orcs and Dark Mages switch tactics based on health
+#    - Demons always press the attack
+# 4. Try fighting same enemy type at different health levels
+# 5. See AI behavior change based on battle state
 ```
 
 ### Test Decorator
