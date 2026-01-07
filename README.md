@@ -15,7 +15,7 @@ A text-based dungeon crawler game demonstrating multiple design patterns in Java
 ## Design Patterns Implemented
 
 This project demonstrates **6 design patterns** from **3 different categories**:
-- **1 Creational Pattern:** Singleton
+- **1 Creational Pattern:** Singleton, Factory
 - **2 Structural Patterns:** Decorator, Composite
 
 ---
@@ -78,7 +78,98 @@ Without Singleton, multiple Game objects could exist with different states, caus
 
 ---
 
-## 2. DECORATOR PATTERN (Structural)
+## 2. FACTORY PATTERN (Creational)
+
+### Where It's Used
+**File:** `EnemyFactory.java`
+
+### What It Does
+Encapsulates the creation of different enemy types, centralizing enemy instantiation logic and making it easy to add new enemy types without modifying existing code.
+
+### How It Works
+
+```java
+// Factory with enum for enemy types
+public class EnemyFactory {
+    public enum EnemyType {
+        GOBLIN("Goblin", 0.8),
+        SKELETON("Skeleton", 1.0),
+        ORC("Orc", 1.2),
+        DARK_MAGE("Dark Mage", 1.1),
+        DEMON("Demon", 1.4);
+        
+        private final String displayName;
+        private final double difficultyMultiplier;
+        
+        EnemyType(String displayName, double multiplier) {
+            this.displayName = displayName;
+            this.difficultyMultiplier = multiplier;
+        }
+    }
+    
+    // Factory method creates enemies with scaled stats
+    public static Enemy createEnemy(EnemyType type, int level) {
+        double multiplier = type.getDifficultyMultiplier();
+        
+        int scaledHealth = (int)(30 + (level * 10 * multiplier));
+        int scaledAttack = (int)(5 + (level * 2 * multiplier));
+        int scaledDefense = (int)(2 + (level * multiplier));
+        int scaledGold = (int)(10 + (level * 5 * multiplier));
+        
+        return new Enemy(
+            type.getDisplayName(),
+            scaledHealth,
+            scaledAttack,
+            scaledDefense,
+            scaledGold
+        );
+    }
+    
+    // Create random enemy or by index
+    public static Enemy createRandomEnemy(int level) { ... }
+    public static Enemy createEnemyByIndex(int typeIndex, int level) { ... }
+}
+```
+
+### Usage in Code
+
+**Game.java (generateRoom method):**
+```java
+private Room generateRoom(int level) {
+    Room room = new Room(level);
+    
+    int enemyCount = 1 + (level / 3);
+    for (int i = 0; i < enemyCount; i++) {
+        // Factory creates varied enemies by index
+        Enemy enemy = EnemyFactory.createEnemyByIndex(i, level);
+        room.addEnemy(enemy);
+    }
+    
+    return room;
+}
+```
+
+### Where to See It
+1. Start the game and enter any room
+2. Notice enemies have varied types (Goblin, Skeleton, Orc, Dark Mage, Demon)
+3. As you progress to higher levels, each enemy type scales differently
+4. Example at Level 5:
+   - Goblin: weak but nimble (multiplier 0.8)
+   - Demon: deadly and strong (multiplier 1.4)
+
+### Benefits
+ **Centralized Creation Logic** - All enemy creation in one place  
+ **Easy to Extend** - Add new enemy types by extending the enum  
+ **Type Safety** - EnemyType enum prevents invalid enemy names  
+ **Scalable Stats** - Each type has unique difficulty multiplier  
+ **Reduces Code Duplication** - No scattered enemy creation code  
+
+### Why This Pattern?
+Instead of having `createGoblin()`, `createSkeleton()`, `createOrc()` methods scattered throughout the code, the Factory pattern provides a single point of creation. Adding a new enemy type only requires adding it to the enum—the factory method handles everything else.
+
+---
+
+## 3. DECORATOR PATTERN (Structural)
 
 ### Where It's Used
 **Files:** `Weapon.java`, `EnchantedWeapon.java`
@@ -168,7 +259,7 @@ Instead of creating subclasses for every weapon variation (FlameRustySword, IceI
 
 ---
 
-## 3. COMPOSITE PATTERN (Structural)
+## 4. COMPOSITE PATTERN (Structural)
 
 ### Where It's Used
 **Files:** `Item.java`, `SimpleItem.java`, `ItemContainer.java`
@@ -294,6 +385,7 @@ The Composite pattern lets you treat all of this uniformly with one interface, a
 | Pattern | Category | Files | Line Count | Demonstrated In |
 |---------|----------|-------|------------|-----------------|
 | **Singleton** | Creational | `Game.java`, `Main.java` | ~40 | Game instance management |
+| **Factory** | Creational | `EnemyFactory.java`, `Game.java` | ~80 | Room generation - Varied enemy types |
 | **Decorator** | Structural | `Weapon.java`, `EnchantedWeapon.java` | ~60 | Shop option [5] - Weapon enchanting |
 | **Composite** | Structural | `Item.java`, `SimpleItem.java`, `ItemContainer.java` | ~120 | Shop option [6] - Inventory system |
 
@@ -331,10 +423,11 @@ mvn exec:java
 ```
 src/main/java/
 ├── Main.java              # Entry point (uses Singleton)
-├── Game.java              # SINGLETON - game state manager
+├── Game.java              # SINGLETON - game state manager (uses FACTORY)
 ├── Hero.java              # Player character
 ├── HeroType.java          # Hero class definitions
 ├── Enemy.java             # Enemy entities
+├── EnemyFactory.java      # FACTORY - creates different enemy types
 ├── Room.java              # Room/level container
 ├── Shop.java              # Shop system
 │
@@ -354,6 +447,20 @@ src/main/java/
 ```bash
 # Run the game and check Main.java
 # Notice it uses Game.getInstance() - only one instance created
+```
+
+### Test Factory
+```bash
+# 1. Start the game
+# 2. Enter rooms at different levels
+# 3. Observe different enemy types appearing:
+#    - Level 1: Goblin (weak, 0.8x multiplier)
+#    - Level 2: Skeleton (standard, 1.0x multiplier)
+#    - Level 3: Orc (tougher, 1.2x multiplier)
+#    - Level 4: Dark Mage (threatening, 1.1x multiplier)
+#    - Level 5+: Demon (deadly, 1.4x multiplier)
+# 4. Notice multi-enemy rooms have varied types
+# 5. Check enemy stats scale based on level and type
 ```
 
 ### Test Decorator

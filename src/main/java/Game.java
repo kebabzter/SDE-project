@@ -85,6 +85,7 @@ public class Game {
     
     /**
      * Generates a room with enemies scaled to the level.
+     * Uses EnemyFactory to create different enemy types.
      */
     private Room generateRoom(int level) {
         Room room = new Room(level);
@@ -93,26 +94,12 @@ public class Game {
         int enemyCount = 1 + (level / 3);
         
         for (int i = 0; i < enemyCount; i++) {
-            Enemy enemy = createScaledEnemy(level);
+            // Use EnemyFactory to create enemies by index, cycling through types
+            Enemy enemy = EnemyFactory.createEnemyByIndex(i, level);
             room.addEnemy(enemy);
         }
         
         return room;
-    }
-    
-    /**
-     * Creates an enemy with stats scaled to the level.
-     */
-    private Enemy createScaledEnemy(int level) {
-        String[] enemyNames = {"Goblin", "Skeleton", "Orc", "Dark Mage", "Demon"};
-        String name = enemyNames[(level - 1) % enemyNames.length];
-        
-        int health = 30 + (level * 10);
-        int attack = 5 + (level * 2);
-        int defense = 2 + level;
-        int gold = 10 + (level * 5);
-        
-        return new Enemy(name, health, attack, defense, gold);
     }
     
     /**
