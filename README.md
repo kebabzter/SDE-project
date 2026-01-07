@@ -15,8 +15,9 @@ A text-based dungeon crawler game demonstrating multiple design patterns in Java
 ## Design Patterns Implemented
 
 This project demonstrates **6 design patterns** from **3 different categories**:
-- **1 Creational Pattern:** Singleton, Factory
+- **2 Creational Patterns:** Singleton, Factory
 - **2 Structural Patterns:** Decorator, Composite
+- **1 Behavioral Pattern:** State
 
 ---
 
@@ -259,7 +260,152 @@ Instead of creating subclasses for every weapon variation (FlameRustySword, IceI
 
 ---
 
-## 4. COMPOSITE PATTERN (Structural)
+## 4. STATE PATTERN (Behavioral)
+
+### Where It's Used
+**Files:** `HeroState.java`, `NormalState.java`, `PoisonedState.java`, `StunnedState.java`, `Hero.java`
+
+### What It Does
+Allows a hero to change behavior dynamically based on status effects (Normal, Poisoned, Stunned). The hero's attack power, defense, and ability to act depend on its current state.
+
+### How It Works
+
+```java
+// State Interface - defines behavior for all states
+public interface HeroState {
+    void onEnter(Hero hero);
+    void onExit(Hero hero);
+    int modifyAttack(int baseAttack);
+    int modifyDefense(int baseDefense);
+    boolean canAct();
+    String getStateName();
+    String getStateDescription();
+    boolean decrementDuration();
+}
+
+// Concrete State: Normal
+public class NormalState implements HeroState {
+    public int modifyAttack(int baseAttack) {
+        return baseAttack; // No modification
+    }
+    public boolean canAct() {
+        return true; // Can always act
+    }
+}
+
+// Concrete State: Poisoned (3 turns, -40% attack)
+public class PoisonedState implements HeroState {
+    private int turnsRemaining = 3;
+    public int modifyAttack(int baseAttack) {
+        return (int)(baseAttack * 0.6); // 40% reduction
+    }
+    public boolean canAct() {
+        return true; // Can still act
+    }
+}
+
+// Concrete State: Stunned (2 turns, cannot act)
+public class StunnedState implements HeroState {
+    private int turnsRemaining = 2;
+    public int modifyAttack(int baseAttack) {
+        return 0; // Cannot attack
+    }
+    public boolean canAct() {
+        return false; // Fully incapacitated
+    }
+}
+```
+
+### Usage in Code
+
+**Hero.java (state management):**
+```java
+public class Hero {
+    private HeroState currentState; // Holds the current state
+    
+    public int getAttack() {
+        // Delegate to state
+        return currentState.modifyAttack(baseAttack + weapon.getDamage());
+    }
+    
+    public int getDefense() {
+        // Delegate to state
+        return currentState.modifyDefense(defense);
+    }
+    
+    public void setState(HeroState newState) {
+        currentState.onExit(this);
+        this.currentState = newState;
+        currentState.onEnter(this);
+    }
+}
+```
+
+**Game.java (combat with states):**
+```java
+private void combat(Enemy enemy) {
+    while (enemy.isAlive() && hero.isAlive()) {
+        // Check if hero can act
+        if (!hero.canAct()) {
+            System.out.println("⭐ You are stunned and cannot act!");
+        }
+        
+        // Apply damage based on current state
+        int damage = hero.getAttack(); // Uses modified attack
+        enemy.takeDamage(damage);
+        
+        // Enemy randomly applies effects
+        enemy.applyRandomEffect(hero); // Hero state may change!
+        
+        // Update state duration
+        hero.updateState(); // Transitions to Normal if duration expires
+    }
+}
+```
+
+### Where to See It
+1. Start the game and enter combat
+2. Watch for status effect messages:
+   ```
+   ☠ [Hero] has been POISONED! (lasts 3 turns)
+   ⭐ [Hero] has been STUNNED! (lasts 2 turns)
+   ✓ [Hero] returns to normal!
+   ```
+3. Notice:
+   - **Poisoned:** Your attack drops by 40%, and you take 5 damage/turn for 3 turns
+   - **Stunned:** You cannot attack for 2 turns, defense is halved
+   - **Normal:** Full abilities, no penalties
+
+### Benefits
+ **Encapsulation** - Each state contains its own behavior logic  
+ **Easy State Transitions** - Switch states cleanly with `setState()`  
+ **Open/Closed Principle** - Add new states without modifying existing ones  
+ **Single Responsibility** - Each state class handles one state's behavior  
+ **Runtime Behavior Change** - Hero behavior changes dynamically during combat  
+
+### Why This Pattern?
+Without the State pattern, Hero would need massive conditional logic:
+```java
+if (isPoisoned && poisonTurnsLeft > 0) {
+    attack = (int)(attack * 0.6);
+    health -= 5;
+    poisonTurnsLeft--;
+    if (poisonTurnsLeft == 0) isPoisoned = false;
+}
+if (isStunned && stunTurnsLeft > 0) {
+    canAct = false;
+    defense = defense / 2;
+    stunTurnsLeft--;
+    if (stunTurnsLeft == 0) isStunned = false;
+}
+// ... similar for every state
+```
+
+The State pattern elegantly handles this by delegating to state objects.
+
+---
+
+## 5. COMPOSITE PATTERN (Structural)
 
 ### Where It's Used
 **Files:** `Item.java`, `SimpleItem.java`, `ItemContainer.java`
@@ -387,6 +533,7 @@ The Composite pattern lets you treat all of this uniformly with one interface, a
 | **Singleton** | Creational | `Game.java`, `Main.java` | ~40 | Game instance management |
 | **Factory** | Creational | `EnemyFactory.java`, `Game.java` | ~80 | Room generation - Varied enemy types |
 | **Decorator** | Structural | `Weapon.java`, `EnchantedWeapon.java` | ~60 | Shop option [5] - Weapon enchanting |
+| **State** | Behavioral | `HeroState.java`, `NormalState.java`, `PoisonedState.java`, `StunnedState.java`, `Hero.java` | ~150 | Combat - Hero status effects |
 | **Composite** | Structural | `Item.java`, `SimpleItem.java`, `ItemContainer.java` | ~120 | Shop option [6] - Inventory system |
 
 ---
@@ -423,16 +570,21 @@ mvn exec:java
 ```
 src/main/java/
 ├── Main.java              # Entry point (uses Singleton)
-├── Game.java              # SINGLETON - game state manager (uses FACTORY)
-├── Hero.java              # Player character
+├── Game.java              # SINGLETON - game state manager (uses FACTORY and STATE)
+├── Hero.java              # Player character (uses STATE pattern)
 ├── HeroType.java          # Hero class definitions
-├── Enemy.java             # Enemy entities
+├── Enemy.java             # Enemy entities (applies STATE effects)
 ├── EnemyFactory.java      # FACTORY - creates different enemy types
 ├── Room.java              # Room/level container
 ├── Shop.java              # Shop system
 │
 ├── Weapon.java            # DECORATOR - base weapon
 ├── EnchantedWeapon.java   # DECORATOR - weapon decorator
+│
+├── HeroState.java         # STATE - state interface
+├── NormalState.java       # STATE - normal status
+├── PoisonedState.java     # STATE - poisoned status
+├── StunnedState.java      # STATE - stunned status
 │
 ├── Item.java              # COMPOSITE - component interface
 ├── SimpleItem.java        # COMPOSITE - leaf node
@@ -461,6 +613,20 @@ src/main/java/
 #    - Level 5+: Demon (deadly, 1.4x multiplier)
 # 4. Notice multi-enemy rooms have varied types
 # 5. Check enemy stats scale based on level and type
+```
+
+### Test State
+```bash
+# 1. Start game and enter combat
+# 2. Fight multiple enemies and watch for status effects:
+#    ☠ You are POISONED! (reduced attack for 3 turns)
+#    ⭐ You are STUNNED! (cannot act for 2 turns)
+# 3. Check hero status:
+#    - Poisoned: Attack is reduced by 40%, take 5 damage/turn
+#    - Stunned: Cannot perform actions, defense halved
+# 4. Watch effects expire:
+#    ✓ [Hero] returns to normal!
+# 5. Verify state transitions in combat UI
 ```
 
 ### Test Decorator
