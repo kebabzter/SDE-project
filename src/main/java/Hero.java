@@ -10,6 +10,9 @@ public class Hero {
     private int defense;
     private Weapon weapon;
     private ItemContainer inventory;
+    
+    // State pattern for hero status effects
+    private HeroState currentState;
 
     public Hero(String playerName, HeroType type) {
         this.name = playerName;
@@ -23,6 +26,10 @@ public class Hero {
         this.defense = 5 + (type.getStrength() / 2);
         this.weapon = new Weapon("Rusty Sword", 5); // Starting weapon
         this.inventory = new ItemContainer("Backpack", 10);
+        
+        // Initialize with normal state
+        this.currentState = new NormalState();
+        this.currentState.onEnter(this);
         
         // Add starting items to inventory
         inventory.addItem(new SimpleItem("Health Potion", 20, "Restores 30 HP"));
@@ -38,9 +45,13 @@ public class Hero {
         System.out.println("Health:       " + health + "/" + maxHealth);
         System.out.println("Mana:         " + mana);
         System.out.println("Attack:       " + getAttack() + " (Base: " + baseAttack + ")");
-        System.out.println("Defense:      " + defense);
+        System.out.println("Defense:      " + getDefense());
         System.out.println("Gold:         " + gold);
         System.out.println("Weapon:       " + weapon.getDescription());
+        System.out.println("\nStatus:       " + currentState.getStateName());
+        if (!currentState.getStateDescription().isEmpty()) {
+            System.out.println("  " + currentState.getStateDescription());
+        }
         System.out.println("\nAttributes:");
         System.out.println("  Strength:     " + type.getStrength());
         System.out.println("  Intelligence: " + type.getIntelligence());
@@ -49,7 +60,11 @@ public class Hero {
     }
     
     public int getAttack() {
-        return baseAttack + weapon.getDamage();
+        return currentState.modifyAttack(baseAttack + weapon.getDamage());
+    }
+    
+    public int getDefense() {
+        return currentState.modifyDefense(defense);
     }
     
     public void equipWeapon(Weapon newWeapon) {
@@ -93,6 +108,42 @@ public class Hero {
     public void increaseDefense(int amount) {
         defense += amount;
     }
+    
+    /**
+     * Changes the hero's state to a new state
+     * @param newState The new state to transition to
+     */
+    public void setState(HeroState newState) {
+        if (currentState != null) {
+            currentState.onExit(this);
+        }
+        this.currentState = newState;
+        currentState.onEnter(this);
+    }
+    
+    /**
+     * Returns the current state
+     */
+    public HeroState getCurrentState() {
+        return currentState;
+    }
+    
+    /**
+     * Checks if hero can act (based on current state)
+     */
+    public boolean canAct() {
+        return currentState.canAct();
+    }
+    
+    /**
+     * Updates the current state duration and transitions if needed
+     */
+    public void updateState() {
+        if (currentState.decrementDuration()) {
+            // State duration expired, return to normal
+            setState(new NormalState());
+        }
+    }
 
     // Getters
     public String getName() {
@@ -129,9 +180,5 @@ public class Hero {
     
     public Weapon getWeapon() {
         return weapon;
-    }
-    
-    public int getDefense() {
-        return defense;
     }
 }
