@@ -104,6 +104,7 @@ public class Game {
     
     /**
      * Handles combat between hero and enemy.
+     * Includes state management for status effects.
      */
     private void combat(Enemy enemy) {
         System.out.println("\n⚔ A " + enemy.getName() + " appears!");
@@ -112,14 +113,21 @@ public class Game {
             System.out.println("\n─────────────────────────────────────");
             System.out.println("You: " + hero.getHealth() + "/" + hero.getMaxHealth() + " HP | " + 
                              enemy.getName() + ": " + enemy.getHealth() + "/" + enemy.getMaxHealth() + " HP");
+            System.out.println("Status: " + hero.getCurrentState().getStateName());
             System.out.println("─────────────────────────────────────");
-            System.out.println("[1] Attack");
-            System.out.println("[2] Defend");
+            
+            // Check if hero is stunned
+            if (!hero.canAct()) {
+                System.out.println("⭐ You are stunned and cannot act!");
+            } else {
+                System.out.println("[1] Attack");
+                System.out.println("[2] Defend");
+            }
             System.out.print("> ");
             
             String action = scanner.nextLine().trim();
             
-            if (action.equals("1")) {
+            if (hero.canAct() && action.equals("1")) {
                 // Hero attacks
                 int damage = hero.getAttack();
                 enemy.takeDamage(damage);
@@ -132,18 +140,40 @@ public class Game {
                     break;
                 }
                 
+                // Chance for enemy to apply status effect
+                enemy.applyRandomEffect(hero);
+                
                 // Enemy attacks back
                 int enemyDamage = enemy.getAttack();
                 hero.takeDamage(enemyDamage);
                 System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage!");
                 
-            } else if (action.equals("2")) {
+            } else if (hero.canAct() && action.equals("2")) {
                 // Hero defends
                 System.out.println("You brace for impact!");
                 int enemyDamage = Math.max(1, enemy.getAttack() / 2);
                 hero.takeDamage(enemyDamage);
                 System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage (reduced)!");
+            } else if (!hero.canAct()) {
+                // Hero is stunned or otherwise unable to act
+                int enemyDamage = enemy.getAttack();
+                hero.takeDamage(enemyDamage);
+                System.out.println(enemy.getName() + " attacks you for " + enemyDamage + " damage!");
+            } else {
+                System.out.println("Invalid action!");
+                continue;
             }
+            
+            // Apply poison damage if poisoned
+            if (hero.getCurrentState() instanceof PoisonedState) {
+                PoisonedState poisoned = (PoisonedState) hero.getCurrentState();
+                int poisonDamage = poisoned.getPoisonDamage();
+                hero.takeDamage(poisonDamage);
+                System.out.println("☠ Poison damage: " + poisonDamage + " HP!");
+            }
+            
+            // Update hero state (decrement duration, transition if needed)
+            hero.updateState();
         }
     }
     
