@@ -143,22 +143,28 @@ public class Game {
                 // Chance for enemy to apply status effect
                 enemy.applyRandomEffect(hero);
                 
-                // Enemy attacks back
-                int enemyDamage = enemy.getAttack();
-                hero.takeDamage(enemyDamage);
-                System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage!");
+                // Enemy decides action using AI strategy
+                EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
+                performEnemyAction(enemy, hero, enemyAction);
                 
             } else if (hero.canAct() && action.equals("2")) {
                 // Hero defends
                 System.out.println("You brace for impact!");
-                int enemyDamage = Math.max(1, enemy.getAttack() / 2);
-                hero.takeDamage(enemyDamage);
-                System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage (reduced)!");
+                
+                // Enemy decides action using AI strategy
+                EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
+                
+                if (enemyAction == EnemyAI.Action.ATTACK) {
+                    int enemyDamage = Math.max(1, enemy.getAttack() / 2);
+                    hero.takeDamage(enemyDamage);
+                    System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage (reduced)!");
+                } else {
+                    performEnemyAction(enemy, hero, enemyAction);
+                }
             } else if (!hero.canAct()) {
                 // Hero is stunned or otherwise unable to act
-                int enemyDamage = enemy.getAttack();
-                hero.takeDamage(enemyDamage);
-                System.out.println(enemy.getName() + " attacks you for " + enemyDamage + " damage!");
+                EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
+                performEnemyAction(enemy, hero, enemyAction);
             } else {
                 System.out.println("Invalid action!");
                 continue;
@@ -174,6 +180,30 @@ public class Game {
             
             // Update hero state (decrement duration, transition if needed)
             hero.updateState();
+        }
+    }
+    
+    /**
+     * Handles enemy action based on AI decision
+     * @param enemy The enemy taking action
+     * @param hero The target hero
+     * @param action The action to perform
+     */
+    private void performEnemyAction(Enemy enemy, Hero hero, EnemyAI.Action action) {
+        switch (action) {
+            case ATTACK:
+                int enemyDamage = enemy.getAttack();
+                hero.takeDamage(enemyDamage);
+                System.out.println(enemy.getName() + " (" + enemy.getStrategy().getStrategyName() + ") attacks for " + enemyDamage + " damage!");
+                break;
+            case DEFEND:
+                System.out.println(enemy.getName() + " (" + enemy.getStrategy().getStrategyName() + ") braces for impact!");
+                break;
+            case HEAL:
+                int healAmount = Math.max(5, enemy.getMaxHealth() / 10);
+                enemy.heal(healAmount);
+                System.out.println(enemy.getName() + " (" + enemy.getStrategy().getStrategyName() + ") heals for " + healAmount + " HP!");
+                break;
         }
     }
     
