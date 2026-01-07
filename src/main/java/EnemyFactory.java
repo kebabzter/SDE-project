@@ -46,7 +46,7 @@ public class EnemyFactory {
      * 
      * @param type The EnemyType to create
      * @param level The difficulty level (affects stats)
-     * @return A new Enemy instance with scaled stats
+     * @return A new Enemy instance with scaled stats and AI strategy
      */
     public static Enemy createEnemy(EnemyType type, int level) {
         double multiplier = type.getDifficultyMultiplier();
@@ -62,13 +62,51 @@ public class EnemyFactory {
         int scaledDefense = (int)(baseDefense + (level * multiplier));
         int scaledGold = (int)(baseGold + (level * 5 * multiplier));
         
-        return new Enemy(
+        Enemy enemy = new Enemy(
             type.getDisplayName(),
             scaledHealth,
             scaledAttack,
             scaledDefense,
             scaledGold
         );
+        
+        // Assign different AI strategies based on enemy type
+        assignStrategy(enemy, type);
+        
+        return enemy;
+    }
+    
+    /**
+     * Assigns an appropriate AI strategy to the enemy based on its type
+     * 
+     * @param enemy The enemy to assign a strategy to
+     * @param type The enemy type
+     */
+    private static void assignStrategy(Enemy enemy, EnemyType type) {
+        switch (type) {
+            case GOBLIN:
+                // Goblins are cowardly, prefer defense
+                enemy.setStrategy(new DefensiveAI());
+                break;
+            case SKELETON:
+                // Skeletons are relentless, always attack
+                enemy.setStrategy(new AggressiveAI());
+                break;
+            case ORC:
+                // Orcs are strong and adaptable
+                enemy.setStrategy(new SmartAI());
+                break;
+            case DARK_MAGE:
+                // Dark mages are strategic and intelligent
+                enemy.setStrategy(new SmartAI());
+                break;
+            case DEMON:
+                // Demons are ruthless and aggressive
+                enemy.setStrategy(new AggressiveAI());
+                break;
+            default:
+                enemy.setStrategy(new AggressiveAI());
+        }
     }
     
     /**
