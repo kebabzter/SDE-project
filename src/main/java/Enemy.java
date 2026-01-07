@@ -20,6 +20,21 @@ public class Enemy {
         health = Math.max(0, health - actualDamage);
     }
     
+    /**
+     * Applies a random status effect to the target hero
+     * 25% poison, 25% stun, 50% no effect
+     */
+    public void applyRandomEffect(Hero hero) {
+        int random = (int)(Math.random() * 100);
+        
+        if (random < 25) {
+            hero.setState(new PoisonedState());
+        } else if (random < 50) {
+            hero.setState(new StunnedState());
+        }
+        // Otherwise (50-100), no effect
+    }
+    
     public boolean isAlive() {
         return health > 0;
     }
