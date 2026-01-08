@@ -6,11 +6,17 @@ public class Shop {
     public Shop(Scanner scanner) {
         this.scanner = scanner;
     }
+    
+    private void clearScreen() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
 
     public void open(Hero hero) {
         boolean shopping = true;
         
         while (shopping) {
+            clearScreen();
             displayShop(hero);
             
             System.out.print("\nYour choice: ");
@@ -24,10 +30,15 @@ public class Shop {
                 case "5" -> enchantWeapon(hero);
                 case "6" -> viewInventory(hero);
                 case "0" -> shopping = false;
-                default -> System.out.println("Invalid choice. Please try again.");
+                default -> {
+                    System.out.println("Invalid choice. Please try again.");
+                    System.out.println("\nPress ENTER to continue...");
+                    scanner.nextLine();
+                }
             }
         }
         
+        clearScreen();
         System.out.println("\nLeaving shop...\n");
     }
     
@@ -67,6 +78,8 @@ public class Shop {
         } else {
             System.out.println("✗ Not enough gold!");
         }
+        System.out.println("\nPress ENTER to continue...");
+        scanner.nextLine();
     }
     
     private void buyAttackUpgrade(Hero hero) {
@@ -78,6 +91,8 @@ public class Shop {
         } else {
             System.out.println("✗ Not enough gold!");
         }
+        System.out.println("\nPress ENTER to continue...");
+        scanner.nextLine();
     }
     
     private void buyDefenseUpgrade(Hero hero) {
@@ -89,6 +104,8 @@ public class Shop {
         } else {
             System.out.println("✗ Not enough gold!");
         }
+        System.out.println("\nPress ENTER to continue...");
+        scanner.nextLine();
     }
     
     private void buyFullHeal(Hero hero) {
@@ -100,6 +117,8 @@ public class Shop {
         } else {
             System.out.println("✗ Not enough gold!");
         }
+        System.out.println("\nPress ENTER to continue...");
+        scanner.nextLine();
     }
     
     private void enchantWeapon(Hero hero) {
@@ -117,9 +136,12 @@ public class Shop {
         } else {
             System.out.println("✗ Not enough gold!");
         }
+        System.out.println("\nPress ENTER to continue...");
+        scanner.nextLine();
     }
     
     private void viewInventory(Hero hero) {
+        clearScreen();
         System.out.println("\n═══════════════════════════════════════");
         System.out.println("          INVENTORY            ");
         System.out.println("═══════════════════════════════════════");

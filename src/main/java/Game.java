@@ -10,6 +10,15 @@ public class Game {
         this.scanner = new Scanner(System.in);
     }
     
+    /**
+     * Clears the console screen using ANSI escape codes.
+     * Works on Linux, Mac, and most modern terminals.
+     */
+    private void clearScreen() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
+    
     public static Game getInstance() {
         if (instance == null) {
             synchronized (Game.class) {
@@ -25,11 +34,16 @@ public class Game {
      * Starts the game and handles the main flow.
      */
     public void start() {
+        clearScreen();
         printLogo();
         String playerName = getPlayerName();
+        
+        clearScreen();
+        printLogo();
         HeroType selectedType = selectHero();
         hero = new Hero(playerName, selectedType);
         
+        clearScreen();
         System.out.println("\n" + playerName + ", you have chosen the path of the " + hero.getType().getName() + "!");
         hero.displayStats();
         
@@ -48,6 +62,7 @@ public class Game {
         
         while (hero.isAlive()) {
             // Generate room with enemies
+            clearScreen();
             Room room = generateRoom(currentLevel);
             room.displayInfo();
             
@@ -65,12 +80,14 @@ public class Game {
             }
             
             // Room cleared!
+            clearScreen();
             System.out.println("\n✓ Room cleared!");
             
             // Shop phase
             System.out.println("\nWould you like to visit the shop? [Y/N]");
             String choice = scanner.nextLine().trim().toUpperCase();
             if (choice.equals("Y") || choice.equals("YES")) {
+                clearScreen();
                 shop.open(hero);
             }
             
@@ -80,6 +97,7 @@ public class Game {
             scanner.nextLine();
         }
         
+        clearScreen();
         gameOver(currentLevel);
     }
     
@@ -107,21 +125,35 @@ public class Game {
      * Includes state management for status effects.
      */
     private void combat(Enemy enemy) {
+        clearScreen();
         System.out.println("\n⚔ A " + enemy.getName() + " appears!");
+        System.out.println("\nPress ENTER to start combat...");
+        scanner.nextLine();
         
         while (enemy.isAlive() && hero.isAlive()) {
-            System.out.println("\n─────────────────────────────────────");
-            System.out.println("You: " + hero.getHealth() + "/" + hero.getMaxHealth() + " HP | " + 
-                             enemy.getName() + ": " + enemy.getHealth() + "/" + enemy.getMaxHealth() + " HP");
-            System.out.println("Status: " + hero.getCurrentState().getStateName());
-            System.out.println("─────────────────────────────────────");
+            clearScreen();
+            System.out.println("\n╔═══════════════════════════════════════╗");
+            System.out.println("║            ⚔ COMBAT ⚔                 ║");
+            System.out.println("╠═══════════════════════════════════════╣");
+            System.out.printf("║ You:   %3d/%3d HP                     ║%n", 
+                hero.getHealth(), hero.getMaxHealth());
+            
+            // Format enemy line with proper padding
+            String enemyInfo = String.format("(%s)", enemy.getName());
+            System.out.printf("║ Enemy: %3d/%3d HP %-19s║%n", 
+                enemy.getHealth(), enemy.getMaxHealth(), enemyInfo);
+            
+            System.out.printf("║ Status: %-29s ║%n", hero.getCurrentState().getStateName());
+            System.out.println("╠═══════════════════════════════════════╣");
             
             // Check if hero is stunned
             if (!hero.canAct()) {
-                System.out.println("⭐ You are stunned and cannot act!");
+                System.out.println("║ ⭐ You are stunned and cannot act!   ║");
+                System.out.println("╚═══════════════════════════════════════╝");
             } else {
-                System.out.println("[1] Attack");
-                System.out.println("[2] Defend");
+                System.out.println("║ [1] Attack                            ║");
+                System.out.println("║ [2] Defend                            ║");
+                System.out.println("╚═══════════════════════════════════════╝");
             }
             System.out.print("> ");
             
@@ -131,12 +163,14 @@ public class Game {
                 // Hero attacks
                 int damage = hero.getAttack();
                 enemy.takeDamage(damage);
-                System.out.println("You attack for " + damage + " damage!");
+                System.out.println("\n⚔ You attack for " + damage + " damage!");
                 
                 if (!enemy.isAlive()) {
                     System.out.println("✓ " + enemy.getName() + " defeated!");
                     hero.addGold(enemy.getGoldReward());
                     System.out.println("+ " + enemy.getGoldReward() + " gold");
+                    System.out.println("\nPress ENTER to continue...");
+                    scanner.nextLine();
                     break;
                 }
                 
@@ -147,9 +181,12 @@ public class Game {
                 EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
                 performEnemyAction(enemy, hero, enemyAction);
                 
+                System.out.println("\nPress ENTER to continue...");
+                scanner.nextLine();
+                
             } else if (hero.canAct() && action.equals("2")) {
                 // Hero defends
-                System.out.println("You brace for impact!");
+                System.out.println("\n🛡 You brace for impact!");
                 
                 // Enemy decides action using AI strategy
                 EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
@@ -157,14 +194,20 @@ public class Game {
                 if (enemyAction == EnemyAI.Action.ATTACK) {
                     int enemyDamage = Math.max(1, enemy.getAttack() / 2);
                     hero.takeDamage(enemyDamage);
-                    System.out.println(enemy.getName() + " attacks for " + enemyDamage + " damage (reduced)!");
+                    System.out.println("☠ " + enemy.getName() + " attacks for " + enemyDamage + " damage (reduced)!");
                 } else {
                     performEnemyAction(enemy, hero, enemyAction);
                 }
+                
+                System.out.println("\nPress ENTER to continue...");
+                scanner.nextLine();
             } else if (!hero.canAct()) {
                 // Hero is stunned or otherwise unable to act
                 EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
                 performEnemyAction(enemy, hero, enemyAction);
+                
+                System.out.println("\nPress ENTER to continue...");
+                scanner.nextLine();
             } else {
                 System.out.println("Invalid action!");
                 continue;
