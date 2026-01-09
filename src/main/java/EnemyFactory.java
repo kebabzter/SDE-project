@@ -5,12 +5,6 @@
  * the creation of different enemy types. Instead of directly instantiating
  * Enemy subclasses throughout the code, clients use the factory to create
  * enemies based on type and difficulty level.
- * 
- * Benefits:
- * - Centralizes enemy creation logic
- * - Easy to add new enemy types without changing client code
- * - Allows scaling enemy stats based on level/difficulty
- * - Reduces code duplication across the codebase
  */
 public class EnemyFactory {
     
@@ -51,7 +45,6 @@ public class EnemyFactory {
     public static Enemy createEnemy(EnemyType type, int level) {
         double multiplier = type.getDifficultyMultiplier();
         
-        // Base stats scaled by level and enemy type multiplier
         int baseHealth = 30;
         int baseAttack = 5;
         int baseDefense = 2;
@@ -85,23 +78,23 @@ public class EnemyFactory {
     private static void assignStrategy(Enemy enemy, EnemyType type) {
         switch (type) {
             case GOBLIN:
-                // Goblins are cowardly, prefer defense
+                
                 enemy.setStrategy(new DefensiveAI());
                 break;
             case SKELETON:
-                // Skeletons are relentless, always attack
+                
                 enemy.setStrategy(new AggressiveAI());
                 break;
             case ORC:
-                // Orcs are strong and adaptable
+                
                 enemy.setStrategy(new SmartAI());
                 break;
             case DARK_MAGE:
-                // Dark mages are strategic and intelligent
+                
                 enemy.setStrategy(new SmartAI());
                 break;
             case DEMON:
-                // Demons are ruthless and aggressive
+                
                 enemy.setStrategy(new AggressiveAI());
                 break;
             default:

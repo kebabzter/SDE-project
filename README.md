@@ -14,6 +14,24 @@ Link to the repo [here](https://github.com/kebabzter/SDE-project)
 
 ---
 
+## Team Collaboration
+
+This project was developed as a collaborative effort between two team members:
+
+- **alexmanev-code** - Focused on Hero and Enemy systems
+  - Implemented **State Pattern** for hero status effects (Normal, Poisoned, Stunned)
+  - Implemented **Strategy Pattern** for enemy AI behaviors (Aggressive, Defensive, Smart)
+  - Implemented **Factory Pattern** for creating varied enemy types with difficulty scaling
+
+- **kebabzter** - Focused on Shop and Item systems
+  - Implemented **Decorator Pattern** for weapon enchantments
+  - Implemented **Composite Pattern** for hierarchical inventory management
+  - Implemented **Singleton Pattern** for centralized game state management
+
+This division of work allowed each team member to specialize in a distinct subsystem while maintaining clean interfaces and demonstrating complementary design patterns. The patterns chosen for each subsystem naturally fit their respective domains, creating a cohesive application that showcases real-world pattern usage.
+
+---
+
 ## Design Patterns Implemented
 
 This project demonstrates **6 design patterns** from **3 different categories**:
