@@ -2,6 +2,8 @@
 
 A text-based dungeon crawler game demonstrating multiple design patterns in Java.
 
+Link to the repo [here](https://github.com/kebabzter/SDE-project)
+
 ## Game Overview
 
 **The Pit** is an endless survival dungeon crawler where you:
