@@ -817,10 +817,31 @@ src/main/java/
 - Scanner resource should only exist once
 - Makes testing and debugging easier with single entry point
 
+**Factory for Enemies:**
+- Centralizes enemy creation logic in one place instead of scattered throughout Game class
+- Makes it trivial to add new enemy types - just add to the enum and it works everywhere
+- Each enemy type has different stats and AI strategies assigned automatically
+- Scales difficulty consistently across all enemy types using multipliers
+- Reduces code duplication and maintains consistency
+
 **Decorator for Weapons:**
 - Allows unlimited enchantment combinations without new classes
 - Players can stack multiple enchantments
 - Easy to add new enchantment types (Ice, Lightning, etc.)
+
+**State for Hero Status Effects:**
+- Cleanly separates behavior for each status effect (Normal, Poisoned, Stunned)
+- Eliminates massive conditional logic that would clutter the Hero class
+- Makes it easy to add new status effects (Burning, Frozen, Blessed, etc.)
+- Duration tracking and state transitions are handled elegantly
+- Each state is self-contained and can be tested independently
+
+**Strategy for Enemy AI:**
+- Different enemy types have distinct personalities and behaviors
+- AI logic is separated from Enemy class, following Single Responsibility Principle
+- Easy to add new AI strategies (Tactical, Cowardly, Berserker, etc.)
+- Strategies can be swapped at runtime (e.g., enemy becomes defensive when wounded)
+- Makes combat more interesting and varied - players face different challenges
 
 **Composite for Inventory:**
 - Natural fit for container-based inventory systems
