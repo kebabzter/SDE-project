@@ -1,3 +1,5 @@
+package model;
+
 /**
  * Base interface for items.
  */
@@ -10,4 +12,3 @@ public interface Item {
         return false;
     }
 }
-

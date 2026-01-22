@@ -1,3 +1,7 @@
+package strategy;
+
+import model.Enemy;
+
 /**
  * SmartAI - Concrete Strategy Implementation
  * 

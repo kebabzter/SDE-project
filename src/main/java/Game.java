@@ -1,5 +1,12 @@
 import java.util.Scanner;
 
+import factory.EnemyFactory;
+import model.Enemy;
+import model.Hero;
+import model.HeroType;
+import model.Room;
+import strategy.EnemyAI;
+
 public class Game {
     private static Game instance;
     private final Scanner scanner;
@@ -213,12 +220,13 @@ public class Game {
                 continue;
             }
             
-            // Apply poison damage if poisoned
-            if (hero.getCurrentState() instanceof PoisonedState) {
-                PoisonedState poisoned = (PoisonedState) hero.getCurrentState();
-                int poisonDamage = poisoned.getPoisonDamage();
-                hero.takeDamage(poisonDamage);
-                System.out.println("☠ Poison damage: " + poisonDamage + " HP!");
+            // Apply turn damage from current state (e.g., poison)
+            // STATE PATTERN: Using interface method instead of instanceof check
+            // This is cleaner and follows polymorphism principles
+            int turnDamage = hero.getCurrentState().getTurnDamage();
+            if (turnDamage > 0) {
+                hero.takeDamage(turnDamage);
+                System.out.println("☠ " + hero.getCurrentState().getStateName() + " damage: " + turnDamage + " HP!");
             }
             
             // Update hero state (decrement duration, transition if needed)

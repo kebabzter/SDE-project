@@ -1,3 +1,5 @@
+package model;
+
 /**
  * Enum representing available hero types in the Dungeon Crawler.
  * Uses the Strategy pattern to define different hero archetypes.

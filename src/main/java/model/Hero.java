@@ -1,3 +1,10 @@
+package model;
+
+import decorator.BasicWeapon;
+import decorator.WeaponComponent;
+import state.HeroState;
+import state.NormalState;
+
 public class Hero {
     private final String name;
     private final HeroType type;
@@ -8,7 +15,9 @@ public class Hero {
     private int gold;
     private int baseAttack;
     private int defense;
-    private Weapon weapon;
+    // Changed from Weapon to WeaponComponent to support Decorator pattern
+    // WeaponComponent can be a BasicWeapon or any decorated weapon
+    private WeaponComponent weapon;
     private ItemContainer inventory;
     
     // State pattern for hero status effects
@@ -24,12 +33,16 @@ public class Hero {
         this.gold = 50; // Starting gold
         this.baseAttack = 5 + type.getStrength();
         this.defense = 5 + (type.getStrength() / 2);
-        this.weapon = new Weapon("Rusty Sword", 5); // Starting weapon
+        // Using BasicWeapon (concrete component) as starting weapon
+        // Can be decorated with FlameEnchantment, FrostEnchantment, etc.
+        this.weapon = new BasicWeapon("Rusty Sword", 5);
         this.inventory = new ItemContainer("Backpack", 10);
         
         // Initialize with normal state
+        // State pattern: set context so state can trigger transitions
         this.currentState = new NormalState();
-        this.currentState.onEnter(this);
+        this.currentState.setContext(this);
+        this.currentState.onEnter();
         
         // Add starting items to inventory
         inventory.addItem(new SimpleItem("Health Potion", 20, "Restores 30 HP"));
@@ -67,7 +80,11 @@ public class Hero {
         return currentState.modifyDefense(defense);
     }
     
-    public void equipWeapon(Weapon newWeapon) {
+    /**
+     * Equips a new weapon (supports Decorator pattern)
+     * @param newWeapon The weapon to equip (can be basic or decorated)
+     */
+    public void equipWeapon(WeaponComponent newWeapon) {
         this.weapon = newWeapon;
         System.out.println("Equipped: " + newWeapon.getDescription());
     }
@@ -110,15 +127,23 @@ public class Hero {
     }
     
     /**
-     * Changes the hero's state to a new state
+     * Changes the hero's state to a new state.
+     * 
+     * STATE PATTERN (Context method):
+     * This is called by states themselves when they need to transition.
+     * The Hero (Context) provides this method, but states decide WHEN to call it.
+     * This follows Refactoring Guru: "States are responsible for transitioning."
+     * 
      * @param newState The new state to transition to
      */
     public void setState(HeroState newState) {
         if (currentState != null) {
-            currentState.onExit(this);
+            currentState.onExit();
         }
         this.currentState = newState;
-        currentState.onEnter(this);
+        // Critical: Set context reference so new state can trigger future transitions
+        currentState.setContext(this);
+        currentState.onEnter();
     }
     
     /**
@@ -136,13 +161,17 @@ public class Hero {
     }
     
     /**
-     * Updates the current state duration and transitions if needed
+     * Delegates turn update to the current state.
+     * 
+     * STATE PATTERN (Context delegation):
+     * The Context (Hero) delegates behavior to the current state.
+     * The state handles its own logic and transitions itself if needed.
+     * Hero does NOT decide when to transition - it just calls handleTurnUpdate().
      */
     public void updateState() {
-        if (currentState.decrementDuration()) {
-            // State duration expired, return to normal
-            setState(new NormalState());
-        }
+        // Delegate to state - state will handle its own transitions
+        // This is the key pattern: Context delegates, State decides
+        currentState.handleTurnUpdate();
     }
 
     // Getters
@@ -178,7 +207,11 @@ public class Hero {
         return baseAttack;
     }
     
-    public Weapon getWeapon() {
+    /**
+     * Returns the equipped weapon (may be decorated)
+     * @return The current weapon component
+     */
+    public WeaponComponent getWeapon() {
         return weapon;
     }
 }

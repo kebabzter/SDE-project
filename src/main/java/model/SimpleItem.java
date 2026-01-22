@@ -1,3 +1,5 @@
+package model;
+
 public class SimpleItem implements Item {
     private final String name;
     private final int value;
@@ -29,4 +31,3 @@ public class SimpleItem implements Item {
         return false;
     }
 }
-

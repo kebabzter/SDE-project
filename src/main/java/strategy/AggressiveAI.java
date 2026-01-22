@@ -1,3 +1,7 @@
+package strategy;
+
+import model.Enemy;
+
 /**
  * AggressiveAI - Concrete Strategy Implementation
  * 

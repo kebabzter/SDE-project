@@ -1,3 +1,7 @@
+package strategy;
+
+import model.Enemy;
+
 /**
  * EnemyAI Interface - Strategy Pattern Implementation
  * 

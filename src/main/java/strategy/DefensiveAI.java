@@ -1,3 +1,7 @@
+package strategy;
+
+import model.Enemy;
+
 /**
  * DefensiveAI - Concrete Strategy Implementation
  * 

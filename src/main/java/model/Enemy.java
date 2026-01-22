@@ -1,3 +1,10 @@
+package model;
+
+import state.PoisonedState;
+import state.StunnedState;
+import strategy.AggressiveAI;
+import strategy.EnemyAI;
+
 public class Enemy {
     private final String name;
     private int health;
@@ -61,13 +68,18 @@ public class Enemy {
     }
     
     /**
-     * Applies a random status effect to the target hero
-     * 25% poison, 25% stun, 50% no effect
+     * Applies a random status effect to the target hero.
+     * 25% poison, 25% stun, 50% no effect.
+     * 
+     * STATE PATTERN: Creating new state instances and setting them via
+     * context's setState() method. The state will receive context reference
+     * automatically and can manage its own lifecycle/transitions.
      */
     public void applyRandomEffect(Hero hero) {
         int random = (int)(Math.random() * 100);
         
         if (random < 25) {
+            // State pattern: create new state, context will set itself as reference
             hero.setState(new PoisonedState());
         } else if (random < 50) {
             hero.setState(new StunnedState());
@@ -108,4 +120,3 @@ public class Enemy {
         return goldReward;
     }
 }
-

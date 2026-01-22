@@ -1,5 +1,13 @@
 import java.util.Scanner;
 
+import decorator.FlameEnchantment;
+import decorator.FrostEnchantment;
+import decorator.LifestealEnchantment;
+import decorator.PoisonEnchantment;
+import decorator.WeaponComponent;
+import decorator.WeaponDecorator;
+import model.Hero;
+
 public class Shop {
     private final Scanner scanner;
     
@@ -121,23 +129,65 @@ public class Shop {
         scanner.nextLine();
     }
     
+    /**
+     * Enchants the hero's weapon using the Decorator pattern.
+     * Demonstrates stacking multiple decorators on a single weapon.
+     * 
+     * DECORATOR PATTERN USAGE:
+     * Each enchantment is a concrete decorator that wraps the current weapon.
+     * Multiple enchantments can be stacked: Flame(Frost(BasicWeapon))
+     * Each decorator adds its bonus while delegating to the wrapped component.
+     */
     private void enchantWeapon(Hero hero) {
-        int cost = 80;
+        System.out.println("\n╔═══════════════════════════════════════╗");
+        System.out.println("║         ENCHANTMENT MENU              ║");
+        System.out.println("╠═══════════════════════════════════════╣");
+        System.out.println("║  [1] Flame Enchant   - 80g (+7 fire)  ║");
+        System.out.println("║  [2] Frost Enchant   - 60g (+5 cold)  ║");
+        System.out.println("║  [3] Vampiric Enchant- 100g (+3, 15%ls)║");
+        System.out.println("║  [4] Toxic Enchant   - 70g (+4 poison)║");
+        System.out.println("║  [0] Back                             ║");
+        System.out.println("╚═══════════════════════════════════════╝");
+        System.out.println("\nCurrent weapon: " + hero.getWeapon().getDescription());
+        System.out.print("\nYour choice: ");
+        
+        String choice = scanner.nextLine().trim();
+        
+        // Get the current weapon (could already be decorated)
+        WeaponComponent currentWeapon = hero.getWeapon();
+        
+        switch (choice) {
+            case "1" -> applyEnchantment(hero, currentWeapon, new FlameEnchantment(currentWeapon), 80, "Flame");
+            case "2" -> applyEnchantment(hero, currentWeapon, new FrostEnchantment(currentWeapon), 60, "Frost");
+            case "3" -> applyEnchantment(hero, currentWeapon, new LifestealEnchantment(currentWeapon), 100, "Vampiric");
+            case "4" -> applyEnchantment(hero, currentWeapon, new PoisonEnchantment(currentWeapon), 70, "Toxic");
+            case "0" -> { return; }
+            default -> System.out.println("Invalid choice.");
+        }
+        
+        System.out.println("\nPress ENTER to continue...");
+        scanner.nextLine();
+    }
+    
+    /**
+     * Helper method to apply an enchantment (decorator) to a weapon.
+     * Demonstrates the Decorator pattern: wrapping the existing weapon
+     * with a new decorator to add functionality.
+     */
+    private void applyEnchantment(Hero hero, WeaponComponent currentWeapon, 
+                                   WeaponDecorator enchantedWeapon, int cost, String enchantName) {
         if (hero.getGold() >= cost) {
             hero.removeGold(cost);
             
-            // Wrap current weapon with enchantment (DECORATOR)
-            Weapon currentWeapon = hero.getWeapon();
-            EnchantedWeapon enchantedWeapon = new EnchantedWeapon(currentWeapon, "Flame", 7);
+            // Decorator pattern: wrap current weapon with the new decorator
+            // The enchantedWeapon already wraps currentWeapon (passed in constructor)
             hero.equipWeapon(enchantedWeapon);
             
-            System.out.println("✓ Weapon enchanted with Flame! +7 damage bonus!");
+            System.out.println("✓ Weapon enchanted with " + enchantName + "!");
             System.out.println("  New weapon: " + enchantedWeapon.getDescription());
         } else {
-            System.out.println("✗ Not enough gold!");
+            System.out.println("✗ Not enough gold! (Need " + cost + "g)");
         }
-        System.out.println("\nPress ENTER to continue...");
-        scanner.nextLine();
     }
     
     private void viewInventory(Hero hero) {
@@ -152,4 +202,3 @@ public class Shop {
         scanner.nextLine();
     }
 }
-
