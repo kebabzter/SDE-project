@@ -129,15 +129,7 @@ public class Shop {
         scanner.nextLine();
     }
     
-    /**
-     * Enchants the hero's weapon using the Decorator pattern.
-     * Demonstrates stacking multiple decorators on a single weapon.
-     * 
-     * DECORATOR PATTERN USAGE:
-     * Each enchantment is a concrete decorator that wraps the current weapon.
-     * Multiple enchantments can be stacked: Flame(Frost(BasicWeapon))
-     * Each decorator adds its bonus while delegating to the wrapped component.
-     */
+    // Decorator pattern - wraps weapon with enchantment
     private void enchantWeapon(Hero hero) {
         System.out.println("\n╔═══════════════════════════════════════╗");
         System.out.println("║         ENCHANTMENT MENU              ║");
@@ -152,15 +144,13 @@ public class Shop {
         System.out.print("\nYour choice: ");
         
         String choice = scanner.nextLine().trim();
-        
-        // Get the current weapon (could already be decorated)
         WeaponComponent currentWeapon = hero.getWeapon();
         
         switch (choice) {
-            case "1" -> applyEnchantment(hero, currentWeapon, new FlameEnchantment(currentWeapon), 80, "Flame");
-            case "2" -> applyEnchantment(hero, currentWeapon, new FrostEnchantment(currentWeapon), 60, "Frost");
-            case "3" -> applyEnchantment(hero, currentWeapon, new LifestealEnchantment(currentWeapon), 100, "Vampiric");
-            case "4" -> applyEnchantment(hero, currentWeapon, new PoisonEnchantment(currentWeapon), 70, "Toxic");
+            case "1" -> applyEnchantment(hero, new FlameEnchantment(currentWeapon), 80, "Flame");
+            case "2" -> applyEnchantment(hero, new FrostEnchantment(currentWeapon), 60, "Frost");
+            case "3" -> applyEnchantment(hero, new LifestealEnchantment(currentWeapon), 100, "Vampiric");
+            case "4" -> applyEnchantment(hero, new PoisonEnchantment(currentWeapon), 70, "Toxic");
             case "0" -> { return; }
             default -> System.out.println("Invalid choice.");
         }
@@ -169,18 +159,9 @@ public class Shop {
         scanner.nextLine();
     }
     
-    /**
-     * Helper method to apply an enchantment (decorator) to a weapon.
-     * Demonstrates the Decorator pattern: wrapping the existing weapon
-     * with a new decorator to add functionality.
-     */
-    private void applyEnchantment(Hero hero, WeaponComponent currentWeapon, 
-                                   WeaponDecorator enchantedWeapon, int cost, String enchantName) {
+    private void applyEnchantment(Hero hero, WeaponDecorator enchantedWeapon, int cost, String enchantName) {
         if (hero.getGold() >= cost) {
             hero.removeGold(cost);
-            
-            // Decorator pattern: wrap current weapon with the new decorator
-            // The enchantedWeapon already wraps currentWeapon (passed in constructor)
             hero.equipWeapon(enchantedWeapon);
             
             System.out.println("✓ Weapon enchanted with " + enchantName + "!");

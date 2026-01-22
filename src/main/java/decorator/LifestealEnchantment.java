@@ -1,14 +1,7 @@
 package decorator;
 
 /**
- * Decorator Pattern - Concrete Decorator (Lifesteal)
- * 
- * LifestealEnchantment adds a small damage bonus and provides
- * lifesteal capability. This demonstrates that decorators can
- * add entirely new properties, not just modify existing values.
- * 
- * The lifesteal percentage can be used by the combat system
- * to heal the hero when attacking.
+ * Concrete Decorator - adds lifesteal
  */
 public class LifestealEnchantment extends WeaponDecorator {
     
@@ -45,14 +38,6 @@ public class LifestealEnchantment extends WeaponDecorator {
         return LIFESTEAL_DAMAGE_BONUS;
     }
     
-    /**
-     * Returns the lifesteal percentage.
-     * This is a NEW capability added by this decorator, not present
-     * in the base component interface. Combat system can check if
-     * the weapon is a LifestealEnchantment and use this value.
-     * 
-     * @return The percentage of damage healed back to the attacker
-     */
     public int getLifestealPercentage() {
         return LIFESTEAL_PERCENTAGE;
     }

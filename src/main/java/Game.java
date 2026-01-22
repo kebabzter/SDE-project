@@ -12,15 +12,10 @@ public class Game {
     private final Scanner scanner;
     private Hero hero;
 
-    // Private constructor prevents external instantiation
     private Game() {
         this.scanner = new Scanner(System.in);
     }
     
-    /**
-     * Clears the console screen using ANSI escape codes.
-     * Works on Linux, Mac, and most modern terminals.
-     */
     private void clearScreen() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
@@ -37,9 +32,6 @@ public class Game {
         return instance;
     }
 
-    /**
-     * Starts the game and handles the main flow.
-     */
     public void start() {
         clearScreen();
         printLogo();
@@ -60,20 +52,15 @@ public class Game {
         gameLoop();
     }
     
-    /**
-     * Main game loop - generates rooms and handles combat/shop cycle.
-     */
     private void gameLoop() {
         int currentLevel = 1;
         Shop shop = new Shop(scanner);
         
         while (hero.isAlive()) {
-            // Generate room with enemies
             clearScreen();
             Room room = generateRoom(currentLevel);
             room.displayInfo();
             
-            // Combat phase
             while (!room.isCleared() && hero.isAlive()) {
                 Enemy enemy = room.getNextEnemy();
                 if (enemy != null) {
@@ -81,16 +68,13 @@ public class Game {
                 }
             }
             
-            // Check if hero survived
             if (!hero.isAlive()) {
                 break;
             }
             
-            // Room cleared!
             clearScreen();
             System.out.println("\n✓ Room cleared!");
             
-            // Shop phase
             System.out.println("\nWould you like to visit the shop? [Y/N]");
             String choice = scanner.nextLine().trim().toUpperCase();
             if (choice.equals("Y") || choice.equals("YES")) {
@@ -98,7 +82,6 @@ public class Game {
                 shop.open(hero);
             }
             
-            // Next level
             currentLevel++;
             System.out.println("\nPress ENTER to descend deeper...");
             scanner.nextLine();
@@ -108,18 +91,11 @@ public class Game {
         gameOver(currentLevel);
     }
     
-    /**
-     * Generates a room with enemies scaled to the level.
-     * Uses EnemyFactory to create different enemy types.
-     */
     private Room generateRoom(int level) {
         Room room = new Room(level);
-        
-        // Number of enemies increases with level
         int enemyCount = 1 + (level / 3);
         
         for (int i = 0; i < enemyCount; i++) {
-            // Use EnemyFactory to create enemies by index, cycling through types
             Enemy enemy = EnemyFactory.createEnemyByIndex(i, level);
             room.addEnemy(enemy);
         }
@@ -127,10 +103,6 @@ public class Game {
         return room;
     }
     
-    /**
-     * Handles combat between hero and enemy.
-     * Includes state management for status effects.
-     */
     private void combat(Enemy enemy) {
         clearScreen();
         System.out.println("\n⚔ A " + enemy.getName() + " appears!");
@@ -145,7 +117,6 @@ public class Game {
             System.out.printf("║ You:   %3d/%3d HP                     ║%n", 
                 hero.getHealth(), hero.getMaxHealth());
             
-            // Format enemy line with proper padding
             String enemyInfo = String.format("(%s)", enemy.getName());
             System.out.printf("║ Enemy: %3d/%3d HP %-19s║%n", 
                 enemy.getHealth(), enemy.getMaxHealth(), enemyInfo);
@@ -153,7 +124,6 @@ public class Game {
             System.out.printf("║ Status: %-29s ║%n", hero.getCurrentState().getStateName());
             System.out.println("╠═══════════════════════════════════════╣");
             
-            // Check if hero is stunned
             if (!hero.canAct()) {
                 System.out.println("║ ⭐ You are stunned and cannot act!   ║");
                 System.out.println("╚═══════════════════════════════════════╝");
@@ -167,7 +137,6 @@ public class Game {
             String action = scanner.nextLine().trim();
             
             if (hero.canAct() && action.equals("1")) {
-                // Hero attacks
                 int damage = hero.getAttack();
                 enemy.takeDamage(damage);
                 System.out.println("\n⚔ You attack for " + damage + " damage!");
@@ -181,10 +150,8 @@ public class Game {
                     break;
                 }
                 
-                // Chance for enemy to apply status effect
                 enemy.applyRandomEffect(hero);
                 
-                // Enemy decides action using AI strategy
                 EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
                 performEnemyAction(enemy, hero, enemyAction);
                 
@@ -192,10 +159,8 @@ public class Game {
                 scanner.nextLine();
                 
             } else if (hero.canAct() && action.equals("2")) {
-                // Hero defends
                 System.out.println("\n🛡 You brace for impact!");
                 
-                // Enemy decides action using AI strategy
                 EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
                 
                 if (enemyAction == EnemyAI.Action.ATTACK) {
@@ -209,7 +174,6 @@ public class Game {
                 System.out.println("\nPress ENTER to continue...");
                 scanner.nextLine();
             } else if (!hero.canAct()) {
-                // Hero is stunned or otherwise unable to act
                 EnemyAI.Action enemyAction = enemy.decideAction(hero.getHealth(), hero.getMaxHealth());
                 performEnemyAction(enemy, hero, enemyAction);
                 
@@ -220,26 +184,17 @@ public class Game {
                 continue;
             }
             
-            // Apply turn damage from current state (e.g., poison)
-            // STATE PATTERN: Using interface method instead of instanceof check
-            // This is cleaner and follows polymorphism principles
+            // Apply state damage (e.g. poison)
             int turnDamage = hero.getCurrentState().getTurnDamage();
             if (turnDamage > 0) {
                 hero.takeDamage(turnDamage);
                 System.out.println("☠ " + hero.getCurrentState().getStateName() + " damage: " + turnDamage + " HP!");
             }
             
-            // Update hero state (decrement duration, transition if needed)
             hero.updateState();
         }
     }
     
-    /**
-     * Handles enemy action based on AI decision
-     * @param enemy The enemy taking action
-     * @param hero The target hero
-     * @param action The action to perform
-     */
     private void performEnemyAction(Enemy enemy, Hero hero, EnemyAI.Action action) {
         switch (action) {
             case ATTACK:
@@ -258,9 +213,6 @@ public class Game {
         }
     }
     
-    /**
-     * Displays game over screen.
-     */
     private void gameOver(int finalLevel) {
         System.out.println("\n╔═══════════════════════════════════════╗");
         System.out.println("║            GAME OVER                  ║");
@@ -270,17 +222,11 @@ public class Game {
         System.out.println("\nThank you for playing The Pit!");
     }
 
-    /**
-     * Gets the player's name from input.
-     */
     private String getPlayerName() {
         System.out.print("Enter your name: ");
         return scanner.nextLine().trim();
     }
 
-    /**
-     * Displays hero selection menu and gets player choice.
-     */
     private HeroType selectHero() {
         System.out.println("\n╔═════════════════════════════════════════╗");
         System.out.println("║         SELECT YOUR HERO CLASS          ║");
@@ -297,9 +243,6 @@ public class Game {
         return getValidHeroSelection();
     }
 
-    /**
-     * Validates and returns hero selection from player input.
-     */
     private HeroType getValidHeroSelection() {
         int choice;
         while (true) {
@@ -317,9 +260,6 @@ public class Game {
         }
     }
 
-    /**
-     * Prints the game logo/banner.
-     */
     private void printLogo() {
         System.out.println();
         System.out.println("  ╔═════════════════════════════════════════════════════════════════╗");

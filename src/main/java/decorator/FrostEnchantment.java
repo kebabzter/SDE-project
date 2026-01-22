@@ -1,14 +1,7 @@
 package decorator;
 
 /**
- * Decorator Pattern - Concrete Decorator (Frost)
- * 
- * FrostEnchantment adds cold damage bonus to a weapon.
- * This decorator can be stacked with other enchantments.
- * 
- * Frost enchantment provides moderate damage but could be extended
- * to add slowing effects in combat (demonstrating how decorators
- * can add entirely new behaviors, not just modify existing ones).
+ * Concrete Decorator - adds cold damage
  */
 public class FrostEnchantment extends WeaponDecorator {
     

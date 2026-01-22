@@ -3,10 +3,7 @@ package strategy;
 import model.Enemy;
 
 /**
- * AggressiveAI - Concrete Strategy Implementation
- * 
- * Always attacks the hero. High damage output but no defensive tactics.
- * Best for strong enemies that want to eliminate threats quickly.
+ * Concrete Strategy - always attacks
  */
 public class AggressiveAI implements EnemyAI {
     

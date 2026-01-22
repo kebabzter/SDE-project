@@ -1,10 +1,7 @@
 package decorator;
 
 /**
- * Decorator Pattern - Concrete Decorator (Poison)
- * 
- * PoisonEnchantment adds a moderate damage bonus and provides
- * poison capability. Demonstrates stacking multiple decorators.
+ * Concrete Decorator - adds poison damage
  */
 public class PoisonEnchantment extends WeaponDecorator {
     

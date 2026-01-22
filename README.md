@@ -21,7 +21,7 @@ This project was developed as a collaborative effort between two team members:
 - **alexmanev-code** - Focused on Hero and Enemy systems
   - Implemented **State Pattern** for hero status effects (Normal, Poisoned, Stunned)
   - Implemented **Strategy Pattern** for enemy AI behaviors (Aggressive, Defensive, Smart)
-  - Implemented **Factory Pattern** for creating varied enemy types with difficulty scaling
+  - Implemented **Factory Method Pattern** for creating varied enemy types with difficulty scaling
 
 - **kebabzter** - Focused on Shop and Item systems
   - Implemented **Decorator Pattern** for weapon enchantments
@@ -35,7 +35,7 @@ This division of work allowed each team member to specialize in a distinct subsy
 ## Design Patterns Implemented
 
 This project demonstrates **6 design patterns** from **3 different categories**:
-- **2 Creational Patterns:** Singleton, Factory
+- **2 Creational Patterns:** Singleton, Factory Method
 - **2 Structural Patterns:** Decorator, Composite
 - **2 Behavioral Patterns:** State, Strategy
 
@@ -99,56 +99,64 @@ Without Singleton, multiple Game objects could exist with different states, caus
 
 ---
 
-## 2. FACTORY PATTERN (Creational)
+## 2. FACTORY METHOD PATTERN (Creational)
 
 ### Where It's Used
-**File:** `EnemyFactory.java`
+**Package:** `factory/`
+**Files:** `EnemyCreator.java`, `GoblinCreator.java`, `SkeletonCreator.java`, `OrcCreator.java`, `DarkMageCreator.java`, `DemonCreator.java`, `EnemyFactory.java`
 
 ### What It Does
-Encapsulates the creation of different enemy types, centralizing enemy instantiation logic and making it easy to add new enemy types without modifying existing code.
+Uses an abstract creator class with a factory method that subclasses override to create specific enemy types. Each concrete creator encapsulates the logic for creating its enemy type with appropriate stats and AI strategies.
 
 ### How It Works
 
 ```java
-// Factory with enum for enemy types
+// Abstract Creator with factory method
+public abstract class EnemyCreator {
+    public abstract Enemy createEnemy(int level);
+    public abstract String getEnemyTypeName();
+    public abstract double getDifficultyMultiplier();
+    
+    protected Enemy createConfiguredEnemy(int level, EnemyAI strategy) {
+        // Common creation logic
+        int health = calculateScaledStat(BASE_HEALTH, level, 10);
+        int attack = calculateScaledStat(BASE_ATTACK, level, 2);
+        // ... create and configure enemy
+        Enemy enemy = new Enemy(getEnemyTypeName(), health, attack, defense, gold);
+        enemy.setStrategy(strategy);
+        return enemy;
+    }
+}
+
+// Concrete Creator for Goblins
+public class GoblinCreator extends EnemyCreator {
+    private static final double DIFFICULTY_MULTIPLIER = 0.8;
+    
+    @Override
+    public Enemy createEnemy(int level) {
+        return createConfiguredEnemy(level, new DefensiveAI());
+    }
+    
+    @Override
+    public String getEnemyTypeName() {
+        return "Goblin";
+    }
+}
+
+// Factory registry
 public class EnemyFactory {
-    public enum EnemyType {
-        GOBLIN("Goblin", 0.8),
-        SKELETON("Skeleton", 1.0),
-        ORC("Orc", 1.2),
-        DARK_MAGE("Dark Mage", 1.1),
-        DEMON("Demon", 1.4);
-        
-        private final String displayName;
-        private final double difficultyMultiplier;
-        
-        EnemyType(String displayName, double multiplier) {
-            this.displayName = displayName;
-            this.difficultyMultiplier = multiplier;
-        }
+    private static final Map<EnemyType, EnemyCreator> creators = new HashMap<>();
+    
+    static {
+        creators.put(EnemyType.GOBLIN, new GoblinCreator());
+        creators.put(EnemyType.SKELETON, new SkeletonCreator());
+        // ... other creators
     }
     
-    // Factory method creates enemies with scaled stats
     public static Enemy createEnemy(EnemyType type, int level) {
-        double multiplier = type.getDifficultyMultiplier();
-        
-        int scaledHealth = (int)(30 + (level * 10 * multiplier));
-        int scaledAttack = (int)(5 + (level * 2 * multiplier));
-        int scaledDefense = (int)(2 + (level * multiplier));
-        int scaledGold = (int)(10 + (level * 5 * multiplier));
-        
-        return new Enemy(
-            type.getDisplayName(),
-            scaledHealth,
-            scaledAttack,
-            scaledDefense,
-            scaledGold
-        );
+        EnemyCreator creator = creators.get(type);
+        return creator.createEnemy(level);
     }
-    
-    // Create random enemy or by index
-    public static Enemy createRandomEnemy(int level) { ... }
-    public static Enemy createEnemyByIndex(int typeIndex, int level) { ... }
 }
 ```
 
@@ -161,7 +169,7 @@ private Room generateRoom(int level) {
     
     int enemyCount = 1 + (level / 3);
     for (int i = 0; i < enemyCount; i++) {
-        // Factory creates varied enemies by index
+        // Factory Method creates enemies via concrete creators
         Enemy enemy = EnemyFactory.createEnemyByIndex(i, level);
         room.addEnemy(enemy);
     }
@@ -175,63 +183,73 @@ private Room generateRoom(int level) {
 2. Notice enemies have varied types (Goblin, Skeleton, Orc, Dark Mage, Demon)
 3. As you progress to higher levels, each enemy type scales differently
 4. Example at Level 5:
-   - Goblin: weak but nimble (multiplier 0.8)
-   - Demon: deadly and strong (multiplier 1.4)
+   - Goblin: weak but nimble (multiplier 0.8, Defensive AI)
+   - Demon: deadly and strong (multiplier 1.4, Aggressive AI)
 
 ### Benefits
- **Centralized Creation Logic** - All enemy creation in one place  
- **Easy to Extend** - Add new enemy types by extending the enum  
- **Type Safety** - EnemyType enum prevents invalid enemy names  
- **Scalable Stats** - Each type has unique difficulty multiplier  
- **Reduces Code Duplication** - No scattered enemy creation code  
+ **Polymorphism over Conditionals** - Uses inheritance instead of switch statements  
+ **Single Responsibility** - Each creator handles one enemy type  
+ **Easy to Extend** - Add new enemy types by creating new creator classes  
+ **Encapsulation** - Each creator knows how to create its specific enemy  
+ **Open/Closed Principle** - Add new types without modifying existing code  
 
 ### Why This Pattern?
-Instead of having `createGoblin()`, `createSkeleton()`, `createOrc()` methods scattered throughout the code, the Factory pattern provides a single point of creation. Adding a new enemy type only requires adding it to the enum—the factory method handles everything else.
+Instead of a Simple Factory with switch statements, the Factory Method pattern uses polymorphism. Each concrete creator (GoblinCreator, SkeletonCreator, etc.) overrides the factory method to produce its specific enemy type. This makes the code more maintainable and follows the Open/Closed Principle.
 
 ---
 
 ## 3. DECORATOR PATTERN (Structural)
 
 ### Where It's Used
-**Files:** `Weapon.java`, `EnchantedWeapon.java`
+**Package:** `decorator/`
+**Files:** `WeaponComponent.java`, `BasicWeapon.java`, `WeaponDecorator.java`, `FlameEnchantment.java`, `FrostEnchantment.java`, `LifestealEnchantment.java`, `PoisonEnchantment.java`
 
 ### What It Does
-Dynamically adds enchantment bonuses to weapons without modifying the original Weapon class.
+Dynamically adds enchantment bonuses to weapons without modifying the original weapon class. Multiple enchantments can be stacked on a single weapon.
 
 ### How It Works
 
 ```java
-// Base Component
-public class Weapon {
-    protected String name;
-    protected int damage;
-    
-    public int getDamage() {
-        return damage;
-    }
+// Component Interface
+public interface WeaponComponent {
+    String getName();
+    int getDamage();
+    String getDescription();
 }
 
-// Decorator wraps the component
-public class EnchantedWeapon extends Weapon {
-    private final Weapon wrappedWeapon;
-    private final String enchantmentName;
-    private final int enchantmentBonus;
+// Concrete Component
+public class BasicWeapon implements WeaponComponent {
+    private final String name;
+    private final int damage;
+    // ... implementation
+}
+
+// Base Decorator
+public abstract class WeaponDecorator implements WeaponComponent {
+    protected final WeaponComponent wrappedWeapon;
     
-    public EnchantedWeapon(Weapon weapon, String enchantmentName, int bonus) {
+    public WeaponDecorator(WeaponComponent weapon) {
         this.wrappedWeapon = weapon;
-        this.enchantmentName = enchantmentName;
-        this.enchantmentBonus = bonus;
     }
     
     @Override
     public int getDamage() {
-        // Add bonus to wrapped weapon's damage
-        return wrappedWeapon.getDamage() + enchantmentBonus;
+        return wrappedWeapon.getDamage(); // Delegate to wrapped component
+    }
+}
+
+// Concrete Decorator - Flame Enchantment
+public class FlameEnchantment extends WeaponDecorator {
+    private static final int FLAME_DAMAGE_BONUS = 7;
+    
+    @Override
+    public int getDamage() {
+        return wrappedWeapon.getDamage() + FLAME_DAMAGE_BONUS;
     }
     
     @Override
     public String getName() {
-        return enchantmentName + " " + wrappedWeapon.getName();
+        return "Flame " + wrappedWeapon.getName();
     }
 }
 ```
@@ -241,7 +259,7 @@ public class EnchantedWeapon extends Weapon {
 **Hero.java:**
 ```java
 // Hero starts with basic weapon
-private Weapon weapon = new Weapon("Rusty Sword", 5); // +5 damage
+private WeaponComponent weapon = new BasicWeapon("Rusty Sword", 5); // +5 damage
 
 public int getAttack() {
     return baseAttack + weapon.getDamage();
@@ -251,112 +269,140 @@ public int getAttack() {
 **Shop.java (enchantWeapon method):**
 ```java
 // Wrap current weapon with enchantment
-Weapon currentWeapon = hero.getWeapon();
-EnchantedWeapon enchanted = new EnchantedWeapon(currentWeapon, "Flame", 7);
+WeaponComponent currentWeapon = hero.getWeapon();
+FlameEnchantment enchanted = new FlameEnchantment(currentWeapon);
 hero.equipWeapon(enchanted);
 
-// Result: "Flame Rusty Sword" with 5 + 7 = 12 damage
+// Can stack multiple enchantments:
+// FrostEnchantment frost = new FrostEnchantment(enchanted);
+// Result: "Frost Flame Rusty Sword" with 5 + 7 + 5 = 17 damage
 ```
 
 ### Where to See It
 1. Start the game - hero has "Rusty Sword (+5 ATK)"
-2. Earn 80 gold (defeat ~3-4 enemies)
-3. Visit shop → Select **[5] Enchant Weapon**
+2. Earn gold and visit shop → Select **[5] Enchant Weapon**
+3. Choose from 4 enchantment options:
+   - **[1] Flame Enchant** - +7 fire damage
+   - **[2] Frost Enchant** - +5 cold damage
+   - **[3] Vampiric Enchant** - +3 damage, 15% lifesteal
+   - **[4] Toxic Enchant** - +4 poison damage
 4. See transformation:
    ```
    Before: Rusty Sword (+5 ATK)
-   After:  Flame Rusty Sword (+12 ATK) [Enchanted: +7]
+   After:  Flame Rusty Sword (+12 ATK) [Flame: +7 fire damage]
    ```
-5. Check hero stats to see combined attack damage
+5. Can enchant multiple times to stack bonuses!
 
 ### Benefits
  **Open/Closed Principle** - Add features without modifying Weapon class  
  **Flexible Enhancement** - Add/remove bonuses dynamically at runtime  
  **Stackable** - Can wrap decorators around decorators for multiple enchantments  
  **No Subclass Explosion** - Don't need FlameWeapon, IceWeapon, etc. classes  
+ **Base Decorator** - Proper structure with abstract base decorator class  
 
 ### Why This Pattern?
-Instead of creating subclasses for every weapon variation (FlameRustySword, IceIronSword, etc.), we can dynamically "decorate" any weapon with any enchantment. This keeps code maintainable and flexible.
+Instead of creating subclasses for every weapon variation (FlameRustySword, IceIronSword, etc.), we can dynamically "decorate" any weapon with any enchantment. The base decorator class ensures all decorators follow the same structure, and multiple decorators can be stacked.
 
 ---
 
 ## 4. STATE PATTERN (Behavioral)
 
 ### Where It's Used
-**Files:** `HeroState.java`, `NormalState.java`, `PoisonedState.java`, `StunnedState.java`, `Hero.java`
+**Package:** `state/`
+**Files:** `HeroState.java`, `NormalState.java`, `PoisonedState.java`, `StunnedState.java`
+**Also:** `model/Hero.java` (Context)
 
 ### What It Does
-Allows a hero to change behavior dynamically based on status effects (Normal, Poisoned, Stunned). The hero's attack power, defense, and ability to act depend on its current state.
+Allows a hero to change behavior dynamically based on status effects (Normal, Poisoned, Stunned). States have access to the context (Hero) and are responsible for triggering their own transitions when conditions are met.
 
 ### How It Works
 
 ```java
-// State Interface - defines behavior for all states
+// State Interface
 public interface HeroState {
-    void onEnter(Hero hero);
-    void onExit(Hero hero);
+    void setContext(Hero context); // States have context reference
+    void onEnter();
+    void onExit();
     int modifyAttack(int baseAttack);
     int modifyDefense(int baseDefense);
     boolean canAct();
     String getStateName();
     String getStateDescription();
-    boolean decrementDuration();
+    void handleTurnUpdate(); // States manage their own transitions
+    int getTurnDamage();
 }
 
 // Concrete State: Normal
 public class NormalState implements HeroState {
-    public int modifyAttack(int baseAttack) {
-        return baseAttack; // No modification
+    private Hero context;
+    
+    @Override
+    public void setContext(Hero context) {
+        this.context = context;
     }
-    public boolean canAct() {
-        return true; // Can always act
+    
+    @Override
+    public void handleTurnUpdate() {
+        // Normal state doesn't transition
     }
 }
 
-// Concrete State: Poisoned (3 turns, -40% attack)
+// Concrete State: Poisoned
 public class PoisonedState implements HeroState {
+    private Hero context;
     private int turnsRemaining = 3;
+    
+    @Override
+    public void setContext(Hero context) {
+        this.context = context;
+    }
+    
+    @Override
     public int modifyAttack(int baseAttack) {
         return (int)(baseAttack * 0.6); // 40% reduction
     }
-    public boolean canAct() {
-        return true; // Can still act
+    
+    @Override
+    public void handleTurnUpdate() {
+        turnsRemaining--;
+        
+        // State triggers its own transition when duration expires
+        if (turnsRemaining <= 0 && context != null) {
+            context.setState(new NormalState());
+        }
     }
-}
-
-// Concrete State: Stunned (2 turns, cannot act)
-public class StunnedState implements HeroState {
-    private int turnsRemaining = 2;
-    public int modifyAttack(int baseAttack) {
-        return 0; // Cannot attack
-    }
-    public boolean canAct() {
-        return false; // Fully incapacitated
+    
+    @Override
+    public int getTurnDamage() {
+        return 5; // Poison damage per turn
     }
 }
 ```
 
 ### Usage in Code
 
-**Hero.java (state management):**
+**Hero.java (Context):**
 ```java
 public class Hero {
-    private HeroState currentState; // Holds the current state
+    private HeroState currentState;
+    
+    public void setState(HeroState newState) {
+        if (currentState != null) {
+            currentState.onExit();
+        }
+        this.currentState = newState;
+        currentState.setContext(this); // Set context reference
+        currentState.onEnter();
+    }
     
     public int getAttack() {
         // Delegate to state
         return currentState.modifyAttack(baseAttack + weapon.getDamage());
     }
     
-    public int getDefense() {
-        // Delegate to state
-        return currentState.modifyDefense(defense);
-    }
-    
-    public void setState(HeroState newState) {
-        currentState.onExit(this);
-        this.currentState = newState;
-        currentState.onEnter(this);
+    // Context delegates to state, state handles transitions
+    public void updateState() {
+        currentState.handleTurnUpdate();
     }
 }
 ```
@@ -372,13 +418,15 @@ private void combat(Enemy enemy) {
         
         // Apply damage based on current state
         int damage = hero.getAttack(); // Uses modified attack
-        enemy.takeDamage(damage);
         
-        // Enemy randomly applies effects
-        enemy.applyRandomEffect(hero); // Hero state may change!
+        // Apply state damage (e.g. poison)
+        int turnDamage = hero.getCurrentState().getTurnDamage();
+        if (turnDamage > 0) {
+            hero.takeDamage(turnDamage);
+        }
         
-        // Update state duration
-        hero.updateState(); // Transitions to Normal if duration expires
+        // Update state - state will transition itself if needed
+        hero.updateState(); // Delegates to state.handleTurnUpdate()
     }
 }
 ```
@@ -389,46 +437,34 @@ private void combat(Enemy enemy) {
    ```
    ☠ [Hero] has been POISONED! (lasts 3 turns)
    ⭐ [Hero] has been STUNNED! (lasts 2 turns)
+   ✓ The poison wears off!
    ✓ [Hero] returns to normal!
    ```
 3. Notice:
    - **Poisoned:** Your attack drops by 40%, and you take 5 damage/turn for 3 turns
    - **Stunned:** You cannot attack for 2 turns, defense is halved
    - **Normal:** Full abilities, no penalties
+4. States automatically transition back to Normal when duration expires
 
 ### Benefits
  **Encapsulation** - Each state contains its own behavior logic  
- **Easy State Transitions** - Switch states cleanly with `setState()`  
+ **State-Driven Transitions** - States decide when to transition, not the context  
+ **Context Reference** - States have access to context to trigger transitions  
  **Open/Closed Principle** - Add new states without modifying existing ones  
  **Single Responsibility** - Each state class handles one state's behavior  
  **Runtime Behavior Change** - Hero behavior changes dynamically during combat  
 
 ### Why This Pattern?
-Without the State pattern, Hero would need massive conditional logic:
-```java
-if (isPoisoned && poisonTurnsLeft > 0) {
-    attack = (int)(attack * 0.6);
-    health -= 5;
-    poisonTurnsLeft--;
-    if (poisonTurnsLeft == 0) isPoisoned = false;
-}
-if (isStunned && stunTurnsLeft > 0) {
-    canAct = false;
-    defense = defense / 2;
-    stunTurnsLeft--;
-    if (stunTurnsLeft == 0) isStunned = false;
-}
-// ... similar for every state
-```
-
-The State pattern elegantly handles this by delegating to state objects.
+The State pattern elegantly handles status effects by delegating to state objects. States are responsible for managing their own lifecycle and triggering transitions when conditions are met (e.g., duration expires). This follows the Refactoring Guru State pattern structure where states have context access and control their own transitions.
 
 ---
 
 ## 5. STRATEGY PATTERN (Behavioral)
 
 ### Where It's Used
-**Files:** `EnemyAI.java`, `AggressiveAI.java`, `DefensiveAI.java`, `SmartAI.java`, `Enemy.java`, `EnemyFactory.java`, `Game.java`
+**Package:** `strategy/`
+**Files:** `EnemyAI.java`, `AggressiveAI.java`, `DefensiveAI.java`, `SmartAI.java`
+**Also:** `model/Enemy.java`, `factory/EnemyCreator.java`, `Game.java`
 
 ### What It Does
 Encapsulates different enemy AI behaviors into strategies. Each enemy type uses a different strategy to decide whether to attack, defend, or heal during combat.
@@ -436,7 +472,7 @@ Encapsulates different enemy AI behaviors into strategies. Each enemy type uses 
 ### How It Works
 
 ```java
-// Strategy Interface - defines the algorithm family
+// Strategy Interface
 public interface EnemyAI {
     enum Action {
         ATTACK("Attack"),
@@ -467,7 +503,6 @@ public class DefensiveAI implements EnemyAI {
 // Concrete Strategy 3: Intelligent adaptation
 public class SmartAI implements EnemyAI {
     public Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth) {
-        // Defend if critical, attack if hero weak, balance otherwise
         double enemyHP = (double) enemy.getHealth() / enemy.getMaxHealth();
         double heroHP = (double) heroHealth / heroMaxHealth;
         
@@ -480,20 +515,22 @@ public class SmartAI implements EnemyAI {
 
 ### Usage in Code
 
-**EnemyFactory.java (assigning strategies):**
+**factory/GoblinCreator.java (assigning strategies):**
 ```java
-private static void assignStrategy(Enemy enemy, EnemyType type) {
-    switch (type) {
-        case GOBLIN:
-            enemy.setStrategy(new DefensiveAI()); // Cowardly
-        case SKELETON:
-            enemy.setStrategy(new AggressiveAI()); // Relentless
-        case ORC:
-            enemy.setStrategy(new SmartAI()); // Strong and adaptable
-        case DARK_MAGE:
-            enemy.setStrategy(new SmartAI()); // Intelligent
-        case DEMON:
-            enemy.setStrategy(new AggressiveAI()); // Ruthless
+public class GoblinCreator extends EnemyCreator {
+    @Override
+    public Enemy createEnemy(int level) {
+        return createConfiguredEnemy(level, new DefensiveAI()); // Goblins use defensive AI
+    }
+}
+```
+
+**factory/DemonCreator.java:**
+```java
+public class DemonCreator extends EnemyCreator {
+    @Override
+    public Enemy createEnemy(int level) {
+        return createConfiguredEnemy(level, new AggressiveAI()); // Demons use aggressive AI
     }
 }
 ```
@@ -530,10 +567,10 @@ private void performEnemyAction(Enemy enemy, Hero hero, EnemyAI.Action action) {
    Demon (Aggressive) attacks for 15 damage!
    ```
 3. Notice:
-   - **Goblins** defend when taking damage (cowardly)
-   - **Skeletons** always attack (relentless)
-   - **Orcs & Dark Mages** adapt based on health levels
-   - **Demons** always attack (ruthless)
+   - **Goblins** defend when at half health or lower (Defensive AI)
+   - **Skeletons** always attack (Aggressive AI)
+   - **Orcs & Dark Mages** adapt based on health levels (Smart AI)
+   - **Demons** always attack (Aggressive AI)
 
 ### Benefits
  **Easy to Extend** - Add new AI behaviors without modifying Enemy class  
@@ -543,27 +580,14 @@ private void performEnemyAction(Enemy enemy, Hero hero, EnemyAI.Action action) {
  **Reusability** - Same strategy can be used by different enemy types  
 
 ### Why This Pattern?
-Without Strategy pattern, Enemy would need massive conditional logic:
-```java
-if (type == GOBLIN && health < maxHealth * 0.5) {
-    defend();
-} else if (type == SKELETON) {
-    attack();
-} else if (type == ORC && health < maxHealth * 0.4) {
-    defend();
-} else if (type == ORC && heroHealth <= maxHeroHealth * 0.3) {
-    attack();
-}
-// ... dozens of conditions
-```
-
-The Strategy pattern cleanly separates decision logic into reusable, independent classes.
+Without Strategy pattern, Enemy would need massive conditional logic. The Strategy pattern cleanly separates decision logic into reusable, independent classes. Each enemy type gets its strategy assigned by its creator in the Factory Method pattern.
 
 ---
 
 ## 6. COMPOSITE PATTERN (Structural)
 
 ### Where It's Used
+**Package:** `model/`
 **Files:** `Item.java`, `SimpleItem.java`, `ItemContainer.java`
 
 ### What It Does
@@ -572,7 +596,7 @@ Creates a tree structure where containers can hold items OR other containers, tr
 ### How It Works
 
 ```java
-// Component Interface - treats items and containers uniformly
+// Component Interface
 public interface Item {
     String getName();
     int getValue();
@@ -594,7 +618,7 @@ public class SimpleItem implements Item {
     }
 }
 
-// Composite - Container that holds Items (including other containers!)
+// Composite - Container that holds Items
 public class ItemContainer implements Item {
     private final List<Item> items;
     
@@ -668,30 +692,20 @@ The "Total value" is calculated recursively - if you had pouches inside the back
  **Flexible Structure** - Add/remove containers and items freely  
 
 ### Why This Pattern?
-In a real game, you might have:
-- Backpack (holds everything)
-  - Gold Pouch (holds money)
-    - Gold Coins
-    - Silver Coins
-  - Weapon Rack (holds weapons)
-    - Sword
-    - Dagger
-  - Health Potion
-
-The Composite pattern lets you treat all of this uniformly with one interface, and operations like "count total value" work recursively through the entire tree.
+In a real game, you might have nested containers. The Composite pattern lets you treat all of this uniformly with one interface, and operations like "count total value" work recursively through the entire tree.
 
 ---
 
 ## Pattern Summary Table
 
-| Pattern | Category | Files | Line Count | Demonstrated In |
-|---------|----------|-------|------------|-----------------|
-| **Singleton** | Creational | `Game.java`, `Main.java` | ~40 | Game instance management |
-| **Factory** | Creational | `EnemyFactory.java`, `Game.java` | ~120 | Room generation - Varied enemy types with strategies |
-| **Decorator** | Structural | `Weapon.java`, `EnchantedWeapon.java` | ~60 | Shop option [5] - Weapon enchanting |
-| **State** | Behavioral | `HeroState.java`, `NormalState.java`, `PoisonedState.java`, `StunnedState.java`, `Hero.java` | ~150 | Combat - Hero status effects |
-| **Strategy** | Behavioral | `EnemyAI.java`, `AggressiveAI.java`, `DefensiveAI.java`, `SmartAI.java`, `Enemy.java`, `EnemyFactory.java`, `Game.java` | ~200 | Combat - Enemy AI decision making |
-| **Composite** | Structural | `Item.java`, `SimpleItem.java`, `ItemContainer.java` | ~120 | Shop option [6] - Inventory system |
+| Pattern | Category | Package/Files | Demonstrated In |
+|---------|----------|---------------|-----------------|
+| **Singleton** | Creational | `Game.java`, `Main.java` | Game instance management |
+| **Factory Method** | Creational | `factory/` - EnemyCreator, concrete creators, EnemyFactory | Room generation - Varied enemy types with strategies |
+| **Decorator** | Structural | `decorator/` - WeaponComponent, BasicWeapon, WeaponDecorator, enchantments | Shop option [5] - Multiple weapon enchantments |
+| **State** | Behavioral | `state/` - HeroState, NormalState, PoisonedState, StunnedState, `model/Hero.java` | Combat - Hero status effects with state-driven transitions |
+| **Strategy** | Behavioral | `strategy/` - EnemyAI, AggressiveAI, DefensiveAI, SmartAI | Combat - Enemy AI decision making |
+| **Composite** | Structural | `model/` - Item, SimpleItem, ItemContainer | Shop option [6] - Inventory system |
 
 ---
 
@@ -707,16 +721,16 @@ The Composite pattern lets you treat all of this uniformly with one interface, a
 mvn compile
 
 # Run the game
-mvn exec:java
+mvn exec:java -Dexec.mainClass="Main"
 ```
 
 ### Quick Start
-1. **Character Creation:** Choose your hero class (Warrior, Mage, or Rogue)
+1. **Character Creation:** Choose your hero class (Wizard, Goblin, or Knight)
 2. **Combat:** Fight enemies that appear in each room
    - Choose [1] Attack or [2] Defend each turn
 3. **Shop:** After clearing a room, visit the shop to:
    - Buy health potions and stat upgrades
-   - **[5] Enchant Weapon** - See Decorator pattern in action!
+   - **[5] Enchant Weapon** - Choose from 4 enchantment types! See Decorator pattern in action!
    - **[6] View Inventory** - See Composite pattern in action!
 4. **Survive:** Each level gets harder - see how deep you can go!
 
@@ -727,30 +741,47 @@ mvn exec:java
 ```
 src/main/java/
 ├── Main.java              # Entry point (uses Singleton)
-├── Game.java              # SINGLETON - game state manager (uses FACTORY, STATE, STRATEGY)
-├── Hero.java              # Player character (uses STATE pattern)
-├── HeroType.java          # Hero class definitions
-├── Enemy.java             # Enemy entities (uses STRATEGY pattern)
-├── EnemyFactory.java      # FACTORY - creates different enemy types with strategies
-├── Room.java              # Room/level container
-├── Shop.java              # Shop system
+├── Game.java              # SINGLETON - game state manager
+├── Shop.java              # Shop system (uses Decorator)
 │
-├── Weapon.java            # DECORATOR - base weapon
-├── EnchantedWeapon.java   # DECORATOR - weapon decorator
+├── factory/               # Factory Method Pattern
+│   ├── EnemyCreator.java      # Abstract Creator
+│   ├── GoblinCreator.java     # Concrete Creator
+│   ├── SkeletonCreator.java   # Concrete Creator
+│   ├── OrcCreator.java        # Concrete Creator
+│   ├── DarkMageCreator.java   # Concrete Creator
+│   ├── DemonCreator.java      # Concrete Creator
+│   └── EnemyFactory.java      # Creator registry
 │
-├── HeroState.java         # STATE - state interface
-├── NormalState.java       # STATE - normal status
-├── PoisonedState.java     # STATE - poisoned status
-├── StunnedState.java      # STATE - stunned status
+├── decorator/             # Decorator Pattern
+│   ├── WeaponComponent.java   # Component Interface
+│   ├── BasicWeapon.java       # Concrete Component
+│   ├── WeaponDecorator.java   # Base Decorator
+│   ├── FlameEnchantment.java  # Concrete Decorator
+│   ├── FrostEnchantment.java  # Concrete Decorator
+│   ├── LifestealEnchantment.java  # Concrete Decorator
+│   └── PoisonEnchantment.java # Concrete Decorator
 │
-├── EnemyAI.java           # STRATEGY - strategy interface for AI
-├── AggressiveAI.java      # STRATEGY - always attacks
-├── DefensiveAI.java       # STRATEGY - defends when wounded
-├── SmartAI.java           # STRATEGY - intelligent adaptation
+├── state/                 # State Pattern
+│   ├── HeroState.java         # State Interface
+│   ├── NormalState.java       # Concrete State
+│   ├── PoisonedState.java     # Concrete State
+│   └── StunnedState.java      # Concrete State
 │
-├── Item.java              # COMPOSITE - component interface
-├── SimpleItem.java        # COMPOSITE - leaf node
-└── ItemContainer.java     # COMPOSITE - composite node
+├── strategy/              # Strategy Pattern
+│   ├── EnemyAI.java           # Strategy Interface
+│   ├── AggressiveAI.java      # Concrete Strategy
+│   ├── DefensiveAI.java       # Concrete Strategy
+│   └── SmartAI.java           # Concrete Strategy
+│
+└── model/                 # Domain Models
+    ├── Hero.java              # Player character (State Context)
+    ├── HeroType.java          # Hero class definitions
+    ├── Enemy.java             # Enemy entities (Strategy Context)
+    ├── Room.java              # Room/level container
+    ├── Item.java              # COMPOSITE - component interface
+    ├── SimpleItem.java        # COMPOSITE - leaf node
+    └── ItemContainer.java     # COMPOSITE - composite node
 ```
 
 ---
@@ -763,18 +794,19 @@ src/main/java/
 # Notice it uses Game.getInstance() - only one instance created
 ```
 
-### Test Factory
+### Test Factory Method
 ```bash
 # 1. Start the game
 # 2. Enter rooms at different levels
 # 3. Observe different enemy types appearing:
-#    - Level 1: Goblin (weak, 0.8x multiplier)
-#    - Level 2: Skeleton (standard, 1.0x multiplier)
-#    - Level 3: Orc (tougher, 1.2x multiplier)
-#    - Level 4: Dark Mage (threatening, 1.1x multiplier)
-#    - Level 5+: Demon (deadly, 1.4x multiplier)
+#    - Level 1: Goblin (weak, 0.8x multiplier, Defensive AI)
+#    - Level 2: Skeleton (standard, 1.0x multiplier, Aggressive AI)
+#    - Level 3: Orc (tougher, 1.2x multiplier, Smart AI)
+#    - Level 4: Dark Mage (threatening, 1.1x multiplier, Smart AI)
+#    - Level 5+: Demon (deadly, 1.4x multiplier, Aggressive AI)
 # 4. Notice multi-enemy rooms have varied types
 # 5. Check enemy stats scale based on level and type
+# 6. Each enemy type uses its assigned AI strategy
 ```
 
 ### Test State
@@ -786,9 +818,10 @@ src/main/java/
 # 3. Check hero status:
 #    - Poisoned: Attack is reduced by 40%, take 5 damage/turn
 #    - Stunned: Cannot perform actions, defense halved
-# 4. Watch effects expire:
+# 4. Watch effects expire automatically:
+#    ✓ The poison wears off!
 #    ✓ [Hero] returns to normal!
-# 5. Verify state transitions in combat UI
+# 5. States transition themselves when duration expires
 ```
 
 ### Test Strategy
@@ -812,10 +845,15 @@ src/main/java/
 ### Test Decorator
 ```bash
 # 1. Start game
-# 2. Fight enemies until you have 80+ gold
+# 2. Fight enemies until you have 60+ gold
 # 3. Visit shop → [5] Enchant Weapon
-# 4. Check hero stats - weapon now has "Flame" prefix and +7 bonus
-# 5. Can enchant again to stack bonuses! (Flame Flame Rusty Sword)
+# 4. Choose from 4 enchantment options:
+#    - Flame Enchant (+7 fire damage)
+#    - Frost Enchant (+5 cold damage)
+#    - Vampiric Enchant (+3 damage, 15% lifesteal)
+#    - Toxic Enchant (+4 poison damage)
+# 5. Check hero stats - weapon now has enchantment prefix and bonus
+# 6. Can enchant multiple times to stack bonuses!
 ```
 
 ### Test Composite
@@ -837,30 +875,31 @@ src/main/java/
 - Scanner resource should only exist once
 - Makes testing and debugging easier with single entry point
 
-**Factory for Enemies:**
-- Centralizes enemy creation logic in one place instead of scattered throughout Game class
-- Makes it trivial to add new enemy types - just add to the enum and it works everywhere
-- Each enemy type has different stats and AI strategies assigned automatically
-- Scales difficulty consistently across all enemy types using multipliers
-- Reduces code duplication and maintains consistency
+**Factory Method for Enemies:**
+- Uses polymorphism instead of switch statements
+- Each concrete creator encapsulates enemy-specific logic
+- Easy to add new enemy types - just create a new creator class
+- Each enemy type automatically gets its appropriate AI strategy
+- Follows Open/Closed Principle
 
 **Decorator for Weapons:**
 - Allows unlimited enchantment combinations without new classes
 - Players can stack multiple enchantments
 - Easy to add new enchantment types (Ice, Lightning, etc.)
+- Proper structure with base decorator class
 
 **State for Hero Status Effects:**
 - Cleanly separates behavior for each status effect (Normal, Poisoned, Stunned)
+- States have context reference and trigger their own transitions
 - Eliminates massive conditional logic that would clutter the Hero class
 - Makes it easy to add new status effects (Burning, Frozen, Blessed, etc.)
-- Duration tracking and state transitions are handled elegantly
 - Each state is self-contained and can be tested independently
 
 **Strategy for Enemy AI:**
 - Different enemy types have distinct personalities and behaviors
 - AI logic is separated from Enemy class, following Single Responsibility Principle
 - Easy to add new AI strategies (Tactical, Cowardly, Berserker, etc.)
-- Strategies can be swapped at runtime (e.g., enemy becomes defensive when wounded)
+- Strategies can be swapped at runtime
 - Makes combat more interesting and varied - players face different challenges
 
 **Composite for Inventory:**
@@ -871,5 +910,3 @@ src/main/java/
 ---
 
 Created as a demonstration of design patterns in Java for Software Design and Engineering course.
-
-

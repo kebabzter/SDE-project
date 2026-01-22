@@ -3,23 +3,16 @@ package state;
 import model.Hero;
 
 /**
- * State Pattern - Concrete State (Stunned)
+ * Concrete State - Stunned
  * 
- * When stunned, the hero cannot act for 2 turns. This represents
- * complete disorientation and loss of control. The hero is vulnerable
- * but takes no damage from being stunned itself.
- * 
- * KEY STATE PATTERN FEATURE:
- * This state manages its own duration and triggers the transition
- * back to NormalState when the stun wears off. The state controls
- * when to transition, not the Context.
+ * Prevents actions and reduces defense.
+ * Triggers transition to NormalState when duration expires.
  */
 public class StunnedState implements HeroState {
     
-    // Reference to the context - required for triggering state transitions
     private Hero context;
-    
     private int turnsRemaining;
+    
     private static final int STUN_DURATION = 2;
     
     public StunnedState() {
@@ -47,17 +40,17 @@ public class StunnedState implements HeroState {
     
     @Override
     public int modifyAttack(int baseAttack) {
-        return 0; // Cannot attack while stunned
+        return 0;
     }
     
     @Override
     public int modifyDefense(int baseDefense) {
-        return baseDefense / 2; // Defense is halved (easier to hit)
+        return baseDefense / 2;
     }
     
     @Override
     public boolean canAct() {
-        return false; // Stunned hero cannot perform any action
+        return false;
     }
     
     @Override
@@ -70,19 +63,12 @@ public class StunnedState implements HeroState {
         return "Cannot act | Defense halved | " + turnsRemaining + " turns remaining";
     }
     
-    /**
-     * STATE TRANSITION LOGIC:
-     * The state manages its own duration and triggers transition to NormalState
-     * when stun expires. This is the key aspect of the State pattern from
-     * Refactoring Guru: states control their own transitions.
-     */
     @Override
     public void handleTurnUpdate() {
         turnsRemaining--;
         
-        // State decides when to transition - not the Context (Hero)
+        // State triggers its own transition when duration expires
         if (turnsRemaining <= 0 && context != null) {
-            // Trigger transition to NormalState
             context.setState(new NormalState());
         }
     }
