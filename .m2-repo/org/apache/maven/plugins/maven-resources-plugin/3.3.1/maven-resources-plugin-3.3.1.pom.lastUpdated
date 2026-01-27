@@ -1,4 +1,4 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Jan 27 16:24:10 CET 2026
-@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1769527450366
+#Tue Jan 27 17:04:52 CET 2026
+@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1769529892004
 https\://repo.maven.apache.org/maven2/.error=Could not transfer artifact org.apache.maven.plugins\:maven-resources-plugin\:pom\:3.3.1 from/to central (https\://repo.maven.apache.org/maven2)\: repo.maven.apache.org\: Temporary failure in name resolution
