@@ -3,30 +3,39 @@ package state;
 import model.Hero;
 
 /**
- * State Pattern - State Interface
- * 
- * States have access to the Hero (context) so they can trigger their own transitions.
- * The context calls handleTurnUpdate() and the state decides when to transition.
+ * State Pattern – State interface.
+ * Declares state-specific methods. Concrete states implement them.
+ *
+ * States store a backreference to the Context (Hero). Through this link they
+ * fetch context info and initiate state transitions. The context is set via
+ * setContext; getContext exposes the link.
+ *
+ * @see <a href="https://refactoring.guru/design-patterns/state">State – Refactoring.Guru</a>
  */
 public interface HeroState {
-    
-    // Set context reference so state can trigger transitions
+
     void setContext(Hero context);
-    
+
+    /** Backreference to the context. States use it to initiate transitions. */
+    Hero getContext();
+
     void onEnter();
     void onExit();
-    
+
     int modifyAttack(int baseAttack);
     int modifyDefense(int baseDefense);
     boolean canAct();
-    
+
     String getStateName();
     String getStateDescription();
-    
-    // State manages its own lifecycle and transitions
+
     void handleTurnUpdate();
-    
+
     default int getTurnDamage() {
         return 0;
     }
+
+    default void onReceivePoison() {}
+
+    default void onReceiveStun() {}
 }

@@ -1,7 +1,5 @@
 package model;
 
-import state.PoisonedState;
-import state.StunnedState;
 import strategy.EnemyAI;
 
 /**
@@ -49,9 +47,9 @@ public interface Enemy {
     default void applyRandomEffect(Hero hero) {
         int random = (int) (Math.random() * 100);
         if (random < 25) {
-            hero.setState(new PoisonedState());
+            hero.receivePoison();
         } else if (random < 50) {
-            hero.setState(new StunnedState());
+            hero.receiveStun();
         }
     }
 }

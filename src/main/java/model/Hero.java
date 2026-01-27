@@ -5,6 +5,14 @@ import decorator.WeaponComponent;
 import state.HeroState;
 import state.NormalState;
 
+/**
+ * State pattern – Context.
+ * Stores a reference to the current state ({@link HeroState}), delegates all
+ * state-specific work to it, and exposes {@link #setState(HeroState)} for
+ * state transitions. States hold a backreference to this Context (Hero).
+ *
+ * @see <a href="https://refactoring.guru/design-patterns/state">State – Refactoring.Guru</a>
+ */
 public class Hero {
     private final String name;
     private final HeroType type;
@@ -18,6 +26,7 @@ public class Hero {
     private WeaponComponent weapon;
     private ItemContainer inventory;
     
+    /** Current state (State pattern). Context delegates to this object. */
     private HeroState currentState;
 
     public Hero(String playerName, HeroType type) {
@@ -33,9 +42,8 @@ public class Hero {
         this.weapon = new BasicWeapon("Rusty Sword", 5);
         this.inventory = new ItemContainer("Backpack", 10);
         
-        // Initialize with normal state
-        this.currentState = new NormalState();
-        this.currentState.setContext(this);
+        // Initialize with normal state; context link established at creation
+        this.currentState = new NormalState(this);
         this.currentState.onEnter();
         
         inventory.addItem(new SimpleItem("Health Potion", 20, "Restores 30 HP"));
@@ -115,7 +123,10 @@ public class Hero {
         defense += amount;
     }
     
-    // State pattern: context provides method for states to trigger transitions
+    /**
+     * Context exposes setter for state (State pattern).
+     * States call this to initiate transitions, e.g. {@code context.setState(new NormalState(context))}.
+     */
     public void setState(HeroState newState) {
         if (currentState != null) {
             currentState.onExit();
@@ -136,6 +147,22 @@ public class Hero {
     // Context delegates to state, state handles transitions
     public void updateState() {
         currentState.handleTurnUpdate();
+    }
+
+    /**
+     * State-guided transition: delegate to current state. The state decides
+     * whether to transition (e.g. NormalState → PoisonedState).
+     */
+    public void receivePoison() {
+        currentState.onReceivePoison();
+    }
+
+    /**
+     * State-guided transition: delegate to current state. The state decides
+     * whether to transition (e.g. NormalState → StunnedState).
+     */
+    public void receiveStun() {
+        currentState.onReceiveStun();
     }
 
     // Getters
