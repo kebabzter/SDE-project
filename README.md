@@ -113,46 +113,34 @@ Uses an abstract creator class with a factory method that subclasses override to
 ```java
 // Abstract Creator with factory method
 public abstract class EnemyCreator {
+    /**
+     * Factory method – subclasses override to create specific concrete products.
+     * Return type matches the product interface (Enemy).
+     */
     public abstract Enemy createEnemy(int level);
-    public abstract String getEnemyTypeName();
-    public abstract double getDifficultyMultiplier();
-    
-    protected Enemy createConfiguredEnemy(int level, EnemyAI strategy) {
-        // Common creation logic
-        int health = calculateScaledStat(BASE_HEALTH, level, 10);
-        int attack = calculateScaledStat(BASE_ATTACK, level, 2);
-        // ... create and configure enemy
-        Enemy enemy = new Enemy(getEnemyTypeName(), health, attack, defense, gold);
-        enemy.setStrategy(strategy);
-        return enemy;
-    }
 }
 
 // Concrete Creator for Goblins
 public class GoblinCreator extends EnemyCreator {
-    private static final double DIFFICULTY_MULTIPLIER = 0.8;
-    
     @Override
     public Enemy createEnemy(int level) {
-        return createConfiguredEnemy(level, new DefensiveAI());
-    }
-    
-    @Override
-    public String getEnemyTypeName() {
-        return "Goblin";
+        return new Goblin(level);
     }
 }
 
-// Factory registry
+// Factory registry – client for Factory Method pattern
 public class EnemyFactory {
     private static final Map<EnemyType, EnemyCreator> creators = new HashMap<>();
     
     static {
         creators.put(EnemyType.GOBLIN, new GoblinCreator());
         creators.put(EnemyType.SKELETON, new SkeletonCreator());
-        // ... other creators
+        creators.put(EnemyType.ORC, new OrcCreator());
+        creators.put(EnemyType.DARK_MAGE, new DarkMageCreator());
+        creators.put(EnemyType.DEMON, new DemonCreator());
     }
     
+    // Selects creator type and delegates to concrete creators
     public static Enemy createEnemy(EnemyType type, int level) {
         EnemyCreator creator = creators.get(type);
         return creator.createEnemy(level);
@@ -221,7 +209,26 @@ public interface WeaponComponent {
 public class BasicWeapon implements WeaponComponent {
     private final String name;
     private final int damage;
-    // ... implementation
+    
+    public BasicWeapon(String name, int damage) {
+        this.name = name;
+        this.damage = damage;
+    }
+    
+    @Override
+    public String getName() {
+        return name;
+    }
+    
+    @Override
+    public int getDamage() {
+        return damage;
+    }
+    
+    @Override
+    public String getDescription() {
+        return name + " (+" + damage + " ATK)";
+    }
 }
 
 // Base Decorator
@@ -233,14 +240,38 @@ public abstract class WeaponDecorator implements WeaponComponent {
     }
     
     @Override
+    public String getName() {
+        return wrappedWeapon.getName();
+    }
+    
+    @Override
     public int getDamage() {
         return wrappedWeapon.getDamage(); // Delegate to wrapped component
     }
+    
+    @Override
+    public String getDescription() {
+        return wrappedWeapon.getDescription();
+    }
+    
+    // Concrete decorators override these
+    public abstract String getEnchantmentName();
+    public abstract int getEnchantmentBonus();
 }
 
 // Concrete Decorator - Flame Enchantment
 public class FlameEnchantment extends WeaponDecorator {
     private static final int FLAME_DAMAGE_BONUS = 7;
+    private static final String ENCHANTMENT_NAME = "Flame";
+    
+    public FlameEnchantment(WeaponComponent weapon) {
+        super(weapon);
+    }
+    
+    @Override
+    public String getName() {
+        return ENCHANTMENT_NAME + " " + wrappedWeapon.getName();
+    }
     
     @Override
     public int getDamage() {
@@ -248,8 +279,18 @@ public class FlameEnchantment extends WeaponDecorator {
     }
     
     @Override
-    public String getName() {
-        return "Flame " + wrappedWeapon.getName();
+    public String getDescription() {
+        return getName() + " (+" + getDamage() + " ATK) [" + ENCHANTMENT_NAME + ": +" + FLAME_DAMAGE_BONUS + " fire damage]";
+    }
+    
+    @Override
+    public String getEnchantmentName() {
+        return ENCHANTMENT_NAME;
+    }
+    
+    @Override
+    public int getEnchantmentBonus() {
+        return FLAME_DAMAGE_BONUS;
     }
 }
 ```
@@ -320,16 +361,26 @@ Allows a hero to change behavior dynamically based on status effects (Normal, Po
 ```java
 // State Interface
 public interface HeroState {
-    void setContext(Hero context); // States have context reference
+    // States store backreference to context (Hero)
+    void setContext(Hero context);
+    Hero getContext(); // Used to initiate transitions
+    
     void onEnter();
     void onExit();
+    
     int modifyAttack(int baseAttack);
     int modifyDefense(int baseDefense);
     boolean canAct();
+    
     String getStateName();
     String getStateDescription();
-    void handleTurnUpdate(); // States manage their own transitions
-    int getTurnDamage();
+    
+    // States manage their own transitions via handleTurnUpdate
+    void handleTurnUpdate();
+    
+    default int getTurnDamage() {
+        return 0;
+    }
 }
 
 // Concrete State: Normal
@@ -352,29 +403,42 @@ public class PoisonedState implements HeroState {
     private Hero context;
     private int turnsRemaining = 3;
     
+    private static final int POISON_DURATION = 3;
+    private static final int POISON_DAMAGE_PER_TURN = 5;
+    private static final double ATTACK_REDUCTION = 0.6;
+    
+    public PoisonedState(Hero context) {
+        this.context = context;
+    }
+    
     @Override
     public void setContext(Hero context) {
         this.context = context;
     }
     
     @Override
+    public Hero getContext() {
+        return context;
+    }
+    
+    @Override
     public int modifyAttack(int baseAttack) {
-        return (int)(baseAttack * 0.6); // 40% reduction
+        return (int)(baseAttack * ATTACK_REDUCTION); // 40% reduction
     }
     
     @Override
     public void handleTurnUpdate() {
         turnsRemaining--;
         
-        // State triggers its own transition when duration expires
+        // State triggers own transition when duration expires
         if (turnsRemaining <= 0 && context != null) {
-            context.setState(new NormalState());
+            context.setState(new NormalState(context));
         }
     }
     
     @Override
     public int getTurnDamage() {
-        return 5; // Poison damage per turn
+        return POISON_DAMAGE_PER_TURN; // Poison damage per turn
     }
 }
 ```
@@ -478,8 +542,19 @@ public interface EnemyAI {
         ATTACK("Attack"),
         DEFEND("Defend"),
         HEAL("Heal");
+        
+        private final String displayName;
+        
+        Action(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
     }
     
+    // Concrete strategies override to implement different behaviors
     Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth);
     String getStrategyName();
     String getDescription();
@@ -487,28 +562,81 @@ public interface EnemyAI {
 
 // Concrete Strategy 1: Always attacks
 public class AggressiveAI implements EnemyAI {
+    @Override
     public Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth) {
         return Action.ATTACK;
+    }
+    
+    @Override
+    public String getStrategyName() {
+        return "Aggressive";
+    }
+    
+    @Override
+    public String getDescription() {
+        return "Always attacks - relentless and dangerous";
     }
 }
 
 // Concrete Strategy 2: Defends when wounded
 public class DefensiveAI implements EnemyAI {
+    private static final double DEFEND_THRESHOLD = 0.5;
+    
+    @Override
     public Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth) {
-        double healthPercent = (double) enemy.getHealth() / enemy.getMaxHealth();
-        return (healthPercent <= 0.5) ? Action.DEFEND : Action.ATTACK;
+        double healthPercentage = (double) enemy.getHealth() / enemy.getMaxHealth();
+        
+        if (healthPercentage <= DEFEND_THRESHOLD) {
+            return Action.DEFEND;
+        }
+        
+        return Action.ATTACK;
+    }
+    
+    @Override
+    public String getStrategyName() {
+        return "Defensive";
+    }
+    
+    @Override
+    public String getDescription() {
+        return "Defends when wounded - tactically cautious";
     }
 }
 
 // Concrete Strategy 3: Intelligent adaptation
 public class SmartAI implements EnemyAI {
+    private static final double LOW_HEALTH_THRESHOLD = 0.4;
+    private static final double WEAK_HERO_THRESHOLD = 0.3;
+    
+    @Override
     public Action selectAction(Enemy enemy, int heroHealth, int heroMaxHealth) {
-        double enemyHP = (double) enemy.getHealth() / enemy.getMaxHealth();
-        double heroHP = (double) heroHealth / heroMaxHealth;
+        double enemyHealthPercent = (double) enemy.getHealth() / enemy.getMaxHealth();
+        double heroHealthPercent = (double) heroHealth / heroMaxHealth;
         
-        if (enemyHP < 0.4) return Action.DEFEND;
-        if (heroHP <= 0.3) return Action.ATTACK;
-        return heroHP > enemyHP ? Action.ATTACK : Action.DEFEND;
+        if (enemyHealthPercent < LOW_HEALTH_THRESHOLD) {
+            return Action.DEFEND;
+        }
+        
+        if (heroHealthPercent <= WEAK_HERO_THRESHOLD) {
+            return Action.ATTACK;
+        }
+        
+        if (heroHealthPercent > enemyHealthPercent) {
+            return Action.ATTACK;
+        } else {
+            return Action.DEFEND;
+        }
+    }
+    
+    @Override
+    public String getStrategyName() {
+        return "Smart";
+    }
+    
+    @Override
+    public String getDescription() {
+        return "Adapts tactics based on battle state - dangerous and cunning";
     }
 }
 ```
@@ -520,7 +648,7 @@ public class SmartAI implements EnemyAI {
 public class GoblinCreator extends EnemyCreator {
     @Override
     public Enemy createEnemy(int level) {
-        return createConfiguredEnemy(level, new DefensiveAI()); // Goblins use defensive AI
+        return new Goblin(level); // Goblin constructor initializes with DefensiveAI
     }
 }
 ```
@@ -530,7 +658,7 @@ public class GoblinCreator extends EnemyCreator {
 public class DemonCreator extends EnemyCreator {
     @Override
     public Enemy createEnemy(int level) {
-        return createConfiguredEnemy(level, new AggressiveAI()); // Demons use aggressive AI
+        return new Demon(level); // Demon constructor initializes with AggressiveAI
     }
 }
 ```
@@ -601,18 +729,30 @@ public interface Item {
     String getName();
     int getValue();
     String getDescription();
-    boolean isContainer();
+    
+    default boolean isContainer() {
+        return false;
+    }
 }
 
 // Leaf - Simple item
 public class SimpleItem implements Item {
     private final String name;
     private final int value;
+    private final String description;
     
+    public SimpleItem(String name, int value, String description) {
+        this.name = name;
+        this.value = value;
+        this.description = description;
+    }
+    
+    @Override
     public int getValue() {
         return value; // Just return own value
     }
     
+    @Override
     public boolean isContainer() {
         return false; // Not a container
     }
@@ -620,10 +760,22 @@ public class SimpleItem implements Item {
 
 // Composite - Container that holds Items
 public class ItemContainer implements Item {
+    private final String name;
+    private final int capacity;
     private final List<Item> items;
     
+    public ItemContainer(String name, int capacity) {
+        this.name = name;
+        this.capacity = capacity;
+        this.items = new ArrayList<>();
+    }
+    
     public boolean addItem(Item item) {
+        if (items.size() >= capacity) {
+            return false;
+        }
         items.add(item); // Can add SimpleItem OR ItemContainer
+        return true;
     }
     
     @Override
@@ -638,6 +790,10 @@ public class ItemContainer implements Item {
     public boolean isContainer() {
         return true; // Is a container
     }
+    
+    public List<Item> getItems() {
+        return new ArrayList<>(items);
+    }
 }
 ```
 
@@ -645,29 +801,32 @@ public class ItemContainer implements Item {
 
 **Hero.java initialization:**
 ```java
-// Create a backpack (ItemContainer)
+// Initialize hero with backpack inventory
 this.inventory = new ItemContainer("Backpack", 10);
 
 // Add a simple item (SimpleItem)
 inventory.addItem(new SimpleItem("Health Potion", 20, "Restores 30 HP"));
 
-// Could also add another container inside!
+// Can also add another container inside (Composite can contain Composite)!
 ItemContainer pouch = new ItemContainer("Gold Pouch", 5);
-inventory.addItem(pouch); // Container inside container!
+inventory.addItem(pouch);
+
+// Now calculate total value – works recursively through entire tree
+int totalValue = inventory.getValue(); // 20 + (0, since pouch is empty)
 ```
 
-**ItemContainer.java (recursive display):**
+**ItemContainer.java (recursive structure):**
 ```java
-public void displayContents(int indent) {
-    System.out.println("+ " + getName() + " (" + items.size() + "/" + capacity + ")");
-    
-    for (Item item : items) {
-        if (item.isContainer()) {
-            ((ItemContainer) item).displayContents(indent + 1); // RECURSIVE!
-        } else {
-            System.out.println("  - " + item.getName());
-        }
-    }
+public int getValue() {
+    // Total value of all contained items (recursive)
+    // Works whether item is SimpleItem or ItemContainer
+    return items.stream()
+        .mapToInt(Item::getValue)
+        .sum();
+}
+
+public List<Item> getItems() {
+    return new ArrayList<>(items);
 }
 ```
 
@@ -786,83 +945,48 @@ src/main/java/
 
 ---
 
-## Testing the Patterns
+## Pattern Implementations
 
-### Test Singleton
+#### ✅ Factory Method Pattern
+Encapsulates enemy creation with polymorphic constructors. `EnemyCreator` is the abstract creator with `createEnemy()` factory method. Concrete creators (`GoblinCreator`, `SkeletonCreator`, `OrcCreator`, `DarkMageCreator`, `DemonCreator`) extend it and instantiate their respective `Enemy` products. `EnemyFactory` coordinates creation requests and manages the registry of available creators. Complies with Refactoring.Guru standard.
+
+#### ✅ State Pattern
+Manages hero status effects through state objects (`NormalState`, `PoisonedState`, `StunnedState`). `Hero` is the context storing a `HeroState` reference and delegating behavior methods (`getAttack()`, `getDefense()`, `canAct()`) to the current state. States store backreferences to the hero and trigger their own transitions when durations expire. Complies with Refactoring.Guru standard.
+
+#### ✅ Decorator Pattern
+Dynamically adds weapon enchantments without modifying the weapon class. `WeaponComponent` is the component interface. `BasicWeapon` is the concrete component. `WeaponDecorator` is the abstract decorator wrapping a `WeaponComponent`. Concrete decorators (`FlameEnchantment`, `FrostEnchantment`, `LifestealEnchantment`, `PoisonEnchantment`) extend it and add damage bonuses. Multiple decorators can be stacked. Complies with Refactoring.Guru standard.
+
+#### ✅ Strategy Pattern
+Encapsulates different enemy AI behaviors in strategy objects. `EnemyAI` is the strategy interface with `selectAction()` method returning an `Action` (ATTACK, DEFEND, HEAL). Concrete strategies (`AggressiveAI`, `DefensiveAI`, `SmartAI`) implement different decision-making algorithms. Strategies are assigned during enemy creation via the Factory Method pattern. Complies with Refactoring.Guru standard.
+
+#### ✅ Composite Pattern
+Structures the inventory as a hierarchical tree of items. `Item` is the component interface. `SimpleItem` is the leaf node (no children). `ItemContainer` is the composite node containing a list of items. Both are accessed uniformly via the `Item` interface. `getValue()` recursively sums all contained items. Complies with Refactoring.Guru standard.
+
+#### ✅ Singleton Pattern
+Ensures only one game instance manages all game state. `Game` has a private constructor, static `instance` variable, and public `getInstance()` method with double-checked locking for thread safety. Lazy initialization creates the instance on first access. Complies with Refactoring.Guru standard.
+
+---
+
+The project includes comprehensive unit tests using **JUnit 5** to verify the design pattern implementations.
+
+### Run Tests
 ```bash
-# Run the game and check Main.java
-# Notice it uses Game.getInstance() - only one instance created
+# Run all tests
+mvn test
+
+# Run Factory Method tests
+mvn test -Dtest=factory.FactoryMethodPatternTest
+
+# Run State Pattern tests
+mvn test -Dtest=state.StatePatternTest
 ```
 
-### Test Factory Method
-```bash
-# 1. Start the game
-# 2. Enter rooms at different levels
-# 3. Observe different enemy types appearing:
-#    - Level 1: Goblin (weak, 0.8x multiplier, Defensive AI)
-#    - Level 2: Skeleton (standard, 1.0x multiplier, Aggressive AI)
-#    - Level 3: Orc (tougher, 1.2x multiplier, Smart AI)
-#    - Level 4: Dark Mage (threatening, 1.1x multiplier, Smart AI)
-#    - Level 5+: Demon (deadly, 1.4x multiplier, Aggressive AI)
-# 4. Notice multi-enemy rooms have varied types
-# 5. Check enemy stats scale based on level and type
-# 6. Each enemy type uses its assigned AI strategy
-```
+**Test Coverage:**
+- **Factory Method:** 32 tests covering product structure, creators, factories, and behavior
+- **State Pattern:** 20 tests covering context, states, transitions, and behavior
+- **Total:** 52 automated unit tests (JUnit 5)
 
-### Test State
-```bash
-# 1. Start game and enter combat
-# 2. Fight multiple enemies and watch for status effects:
-#    ☠ You are POISONED! (reduced attack for 3 turns)
-#    ⭐ You are STUNNED! (cannot act for 2 turns)
-# 3. Check hero status:
-#    - Poisoned: Attack is reduced by 40%, take 5 damage/turn
-#    - Stunned: Cannot perform actions, defense halved
-# 4. Watch effects expire automatically:
-#    ✓ The poison wears off!
-#    ✓ [Hero] returns to normal!
-# 5. States transition themselves when duration expires
-```
-
-### Test Strategy
-```bash
-# 1. Start game and fight enemies at different levels
-# 2. Observe different enemy AI behaviors:
-#    Goblin (Defensive) braces for impact!      # Defensive
-#    Skeleton (Aggressive) attacks for damage!  # Aggressive
-#    Orc (Smart) attacks strategically!         # Smart/Adaptive
-#    Dark Mage (Smart) braces for impact!       # Smart/Adaptive
-#    Demon (Aggressive) attacks for damage!     # Aggressive
-# 3. Notice:
-#    - Goblins defend when at half health or lower
-#    - Skeletons always attack relentlessly
-#    - Orcs and Dark Mages switch tactics based on health
-#    - Demons always press the attack
-# 4. Try fighting same enemy type at different health levels
-# 5. See AI behavior change based on battle state
-```
-
-### Test Decorator
-```bash
-# 1. Start game
-# 2. Fight enemies until you have 60+ gold
-# 3. Visit shop → [5] Enchant Weapon
-# 4. Choose from 4 enchantment options:
-#    - Flame Enchant (+7 fire damage)
-#    - Frost Enchant (+5 cold damage)
-#    - Vampiric Enchant (+3 damage, 15% lifesteal)
-#    - Toxic Enchant (+4 poison damage)
-# 5. Check hero stats - weapon now has enchantment prefix and bonus
-# 6. Can enchant multiple times to stack bonuses!
-```
-
-### Test Composite
-```bash
-# 1. Visit shop → [6] View Inventory
-# 2. See hierarchical tree display
-# 3. Notice total value is calculated recursively
-# (Future enhancement: Add nested containers like pouches)
-```
+Test results available in `target/surefire-reports/` directory.
 
 ---
 
