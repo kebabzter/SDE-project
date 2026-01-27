@@ -5,10 +5,10 @@ import java.util.Map;
 import model.Enemy;
 
 /**
- * Factory Method Pattern - Registry
- * 
- * Uses a registry of concrete creators.
- * Each EnemyType maps to its corresponding creator.
+ * Client for Factory Method pattern.
+ * Selects creator type (by EnemyType) and delegates to concrete creators.
+ * Works with creators and products only through abstract types (EnemyCreator, Enemy).
+ * @see <a href="https://refactoring.guru/design-patterns/factory-method">Factory Method – Refactoring.Guru</a>
  */
 public class EnemyFactory {
     

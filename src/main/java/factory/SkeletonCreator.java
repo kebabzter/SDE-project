@@ -1,27 +1,16 @@
 package factory;
 
 import model.Enemy;
-import strategy.AggressiveAI;
+import model.Skeleton;
 
 /**
- * Concrete Creator for Skeleton enemies
+ * Concrete Creator (Factory Method pattern).
+ * Overrides the factory method to return Skeleton products.
  */
 public class SkeletonCreator extends EnemyCreator {
-    
-    private static final double DIFFICULTY_MULTIPLIER = 1.0;
-    
+
     @Override
     public Enemy createEnemy(int level) {
-        return createConfiguredEnemy(level, new AggressiveAI());
-    }
-    
-    @Override
-    public String getEnemyTypeName() {
-        return "Skeleton";
-    }
-    
-    @Override
-    public double getDifficultyMultiplier() {
-        return DIFFICULTY_MULTIPLIER;
+        return new Skeleton(level);
     }
 }

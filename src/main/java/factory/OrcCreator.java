@@ -1,27 +1,16 @@
 package factory;
 
 import model.Enemy;
-import strategy.SmartAI;
+import model.Orc;
 
 /**
- * Concrete Creator for Orc enemies
+ * Concrete Creator (Factory Method pattern).
+ * Overrides the factory method to return Orc products.
  */
 public class OrcCreator extends EnemyCreator {
-    
-    private static final double DIFFICULTY_MULTIPLIER = 1.2;
-    
+
     @Override
     public Enemy createEnemy(int level) {
-        return createConfiguredEnemy(level, new SmartAI());
-    }
-    
-    @Override
-    public String getEnemyTypeName() {
-        return "Orc";
-    }
-    
-    @Override
-    public double getDifficultyMultiplier() {
-        return DIFFICULTY_MULTIPLIER;
+        return new Orc(level);
     }
 }

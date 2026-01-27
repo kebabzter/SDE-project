@@ -2,90 +2,56 @@ package model;
 
 import state.PoisonedState;
 import state.StunnedState;
-import strategy.AggressiveAI;
 import strategy.EnemyAI;
 
-public class Enemy {
-    private final String name;
-    private int health;
-    private final int maxHealth;
-    private final int attack;
-    private final int defense;
-    private final int goldReward;
-    
-    private EnemyAI strategy;
-    
-    public Enemy(String name, int health, int attack, int defense, int goldReward) {
-        this.name = name;
-        this.health = health;
-        this.maxHealth = health;
-        this.attack = attack;
-        this.defense = defense;
-        this.goldReward = goldReward;
-        this.strategy = new AggressiveAI();
+/**
+ * Product (Factory Method pattern).
+ * Interface common to all objects produced by the creator and its subclasses.
+ * Concrete products (Goblin, Skeleton, etc.) implement this interface.
+ *
+ * @see <a href="https://refactoring.guru/design-patterns/factory-method">Factory Method – Refactoring.Guru</a>
+ */
+public interface Enemy {
+
+    String getName();
+    int getHealth();
+    int getMaxHealth();
+    int getAttack();
+    int getDefense();
+    int getGoldReward();
+    EnemyAI getStrategy();
+
+    void setHealth(int health);
+    void setStrategy(EnemyAI strategy);
+
+    default void takeDamage(int damage) {
+        int actualDamage = Math.max(1, damage - getDefense());
+        setHealth(Math.max(0, getHealth() - actualDamage));
     }
-    
-    public void setStrategy(EnemyAI strategy) {
-        this.strategy = strategy;
+
+    default void heal(int amount) {
+        setHealth(Math.min(getMaxHealth(), getHealth() + amount));
     }
-    
-    public EnemyAI getStrategy() {
-        return strategy;
+
+    default boolean isAlive() {
+        return getHealth() > 0;
     }
-    
-    public EnemyAI.Action decideAction(int heroHealth, int heroMaxHealth) {
-        return strategy.selectAction(this, heroHealth, heroMaxHealth);
+
+    default void displayStatus() {
+        System.out.println(getName() + " - HP: " + getHealth() + "/" + getMaxHealth()
+                + " | ATK: " + getAttack() + " | DEF: " + getDefense());
     }
-    
-    public void takeDamage(int damage) {
-        int actualDamage = Math.max(1, damage - defense);
-        health = Math.max(0, health - actualDamage);
+
+    default EnemyAI.Action decideAction(int heroHealth, int heroMaxHealth) {
+        return getStrategy().selectAction(this, heroHealth, heroMaxHealth);
     }
-    
-    public void heal(int amount) {
-        health = Math.min(maxHealth, health + amount);
-    }
-    
-    public void applyRandomEffect(Hero hero) {
-        int random = (int)(Math.random() * 100);
-        
+
+    default void applyRandomEffect(Hero hero) {
+        int random = (int) (Math.random() * 100);
         if (random < 25) {
             hero.setState(new PoisonedState());
         } else if (random < 50) {
             hero.setState(new StunnedState());
         }
-    }
-    
-    public boolean isAlive() {
-        return health > 0;
-    }
-    
-    public void displayStatus() {
-        System.out.println(name + " - HP: " + health + "/" + maxHealth + " | ATK: " + attack + " | DEF: " + defense);
-    }
-    
-    // Getters
-    public String getName() {
-        return name;
-    }
-    
-    public int getHealth() {
-        return health;
-    }
-    
-    public int getMaxHealth() {
-        return maxHealth;
-    }
-    
-    public int getAttack() {
-        return attack;
-    }
-    
-    public int getDefense() {
-        return defense;
-    }
-    
-    public int getGoldReward() {
-        return goldReward;
     }
 }

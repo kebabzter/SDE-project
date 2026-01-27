@@ -1,27 +1,16 @@
 package factory;
 
 import model.Enemy;
-import strategy.AggressiveAI;
+import model.Demon;
 
 /**
- * Concrete Creator for Demon enemies
+ * Concrete Creator (Factory Method pattern).
+ * Overrides the factory method to return Demon products.
  */
 public class DemonCreator extends EnemyCreator {
-    
-    private static final double DIFFICULTY_MULTIPLIER = 1.4;
-    
+
     @Override
     public Enemy createEnemy(int level) {
-        return createConfiguredEnemy(level, new AggressiveAI());
-    }
-    
-    @Override
-    public String getEnemyTypeName() {
-        return "Demon";
-    }
-    
-    @Override
-    public double getDifficultyMultiplier() {
-        return DIFFICULTY_MULTIPLIER;
+        return new Demon(level);
     }
 }
