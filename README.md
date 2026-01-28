@@ -980,6 +980,8 @@ src/main/java/
 
 ---
 
+# Summary
+
 ## Pattern Implementations
 
 #### ✅ Factory Method Pattern
