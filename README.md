@@ -495,6 +495,41 @@ private void combat(Enemy enemy) {
 }
 ```
 
+### State Transitions
+
+**Both Context and Concrete States can set the next state:**
+
+**Context (Hero) sets state:**
+```java
+// Hero can directly set state (e.g., when receiving effects from external sources)
+public void setState(HeroState newState) {
+    if (currentState != null) {
+        currentState.onExit();  // Clean up old state
+    }
+    this.currentState = newState;
+    currentState.setContext(this);
+    currentState.onEnter();     // Initialize new state
+}
+```
+
+**Concrete States set their own transitions:**
+```java
+// States trigger transitions by calling context.setState()
+@Override
+public void handleTurnUpdate() {
+    turnsRemaining--;
+    if (turnsRemaining <= 0 && context != null) {
+        context.setState(new NormalState(context));  // State initiates transition
+    }
+}
+```
+
+This bidirectional capability allows:
+- **Context-initiated transitions:** Hero receives poison → calls `setState(new PoisonedState(...))`
+- **State-initiated transitions:** Poison duration expires → PoisonedState calls `context.setState(new NormalState(...))`
+
+Both approaches work seamlessly through the same `setState()` mechanism, ensuring consistent state management.
+
 ### Where to See It
 1. Start the game and enter combat
 2. Watch for status effect messages:
